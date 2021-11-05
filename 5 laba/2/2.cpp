@@ -30,7 +30,7 @@ int main()
 	for (i = 0; i < n; i++) 
 		a[i] = rand() % 100;
 	
-	cout << fun(a, n, 0, n / 3.0) * fun(a, n, n / 3.0, n);
+	cout << fun(a, n, 0, n / 3) * fun(a, n, n / 3, n);
 
 	delete[] a;
 }
