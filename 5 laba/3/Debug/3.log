@@ -1,0 +1,4 @@
+﻿  3.cpp
+C:\Users\Коля\Desktop\Laba\5\3\3.cpp(50,18): warning C4101: 'y': unreferenced local variable
+C:\Users\Коля\Desktop\Laba\5\3\3.cpp(50,9): warning C4101: 'j': unreferenced local variable
+  3.vcxproj -> C:\Users\Коля\Desktop\Laba\5\Debug\3.exe

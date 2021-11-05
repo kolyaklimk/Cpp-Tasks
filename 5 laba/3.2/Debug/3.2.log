@@ -1,0 +1,8 @@
+﻿  2.1.cpp
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(26,10): warning C4244: 'return': conversion from 'long double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(38,38): warning C4244: 'initializing': conversion from 'long double' to 'unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(40,39): warning C4244: 'initializing': conversion from 'long double' to 'unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(58,15): warning C4244: 'initializing': conversion from 'long double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(62,15): warning C4244: 'initializing': conversion from 'long double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\5\3.2\2.1.cpp(64,26): warning C4244: 'argument': conversion from 'long double' to 'int', possible loss of data
+  3.2.vcxproj -> C:\Users\Коля\Desktop\Laba\5\Debug\2.1.exe
