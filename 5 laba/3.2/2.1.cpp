@@ -22,7 +22,7 @@ int rec(int n, int r, int k, long double** a)
 	if (n > 0 && r >= 0 && r < n * (k - 1) + 1) {
 		long double sum = 0.0;
 		for (int i = 0; i <= k - 1; i++)
-			sum += a[n - 1][r - i;
+			sum += a[n - 1][r - i];
 		return sum;
 	}
 	return 0;
