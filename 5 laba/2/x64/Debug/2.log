@@ -1,0 +1,5 @@
+﻿  2.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\2\2.cpp(23,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\2\2.cpp(33,25): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\2\2.cpp(33,46): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+  2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\x64\Debug\2.exe
