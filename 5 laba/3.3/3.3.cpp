@@ -4,7 +4,9 @@
 массива ввести с клавиатуры. Создать динамический массив из элементов,
 расположенных в четных столбцах данного массива и имеющих нечетное значение.
 Вычислить среднее арифметическое элементов динамического массива.
-Вывести результат на экран. Использовать функции.*/
+Вывести результат на экран. Использовать функции.
+
+3 номер*/
 
 #include <iostream>
 #include <iomanip>
@@ -15,6 +17,12 @@ void cin_m(int** a, int n) {
 		for (int j = 0; j < n; j++) {
 			cout << "[" << i << "][" << j << "] = ";
 			cin >> a[i][j];
+			while (cin.fail()) {
+				cin.clear();
+				cin.ignore(9999, '\n');
+				cout << "[" << i << "][" << j << "] = ";
+				cin >> a[i][j];
+			}
 		}
 }
 
@@ -36,13 +44,12 @@ int size(int** a, int x) {
 }
 
 void cout_m(int** a, int x, int x1, int size) {
-	cout << "\n\n";
+	cout << "\n";
 	for (int q = 0; q < x; q++) {
 		for (int q1 = 0; q1 < x1; q1++)
 			cout << setw(size) << a[q][q1];
 		cout << '\n';
 	}
-	cout << '\n';
 }
 
 int main()
@@ -50,6 +57,12 @@ int main()
 	int i, j, n, x, y;
 	cout << "N = ";
 	cin >> n;
+	while (cin.fail() || n < 1) {
+		cin.clear();
+		cin.ignore(9999, '\n');
+		cout << "incorrect value, N = ";
+		cin >> n;
+	}
 	x = n / 2;
 
 	int** a = new int* [n];
@@ -93,5 +106,6 @@ int main()
 			m1 += b[q][q1];
 		}
 
-	cout << "Average = " << m1 / m;
+	if (m == 0) cout << "\nNo values";
+	else cout << "\nAverage = " << m1 / m;
 }
