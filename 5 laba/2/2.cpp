@@ -4,18 +4,14 @@
 множителей, вычисляемых по формуле. Рекурсивную функцию
 применять каждый раз отдельно для первой трети массива и для остальной части (2/3)
 массива. Рекурсивные вызовы заканчивать, когда останется только один или два
-элемента.*/
+элемента.
+
+ДИНАМИЧЕСКАЯ БИБЛИОТЕКА*/
 
 #include <iostream>
-#include <iomanip>
+#pragma comment(lib, "Dll1.lib")
+#include "dll.h"
 using namespace std;
-
-double fun(int* a, int n, int q, int k) {
-	if (q == k)
-		return 1;
-	else
-		return (sin(a[q])-cos(a[q])) * fun(a, n, q + 1, k);
-}
 
 int main()
 {

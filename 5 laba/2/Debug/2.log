@@ -1,3 +1,0 @@
-﻿  2.cpp
-C:\Users\Коля\Desktop\Laba\5\2\2.cpp(23,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  2.vcxproj -> C:\Users\Коля\Desktop\Laba\5\Debug\2.exe
