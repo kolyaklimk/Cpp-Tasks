@@ -66,13 +66,19 @@ int main()
                     q11 = q1;
                     if (q1 + k + 1 <= M) q1 += k;
                     if (min > a[q][q1]) min = a[q][q1];
-                    //a[q][q1] = 0;
+                    a[q][q1] = 0;
                     if (q11 < q1) q1 -= k;
                 }
             }
         }
     }
-
     cout << min;
 
+
+    //вывод таблицы
+    cout << "\n\n";
+    for (q = 0; q < N; q++) {
+        for (q1 = 0; q1 < M; q1++) cout << setw(t2) << a[q][q1] << " ";
+        cout << "\n";
+    }
 }
