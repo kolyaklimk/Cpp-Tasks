@@ -86,6 +86,7 @@ int main()
 			}
 
 	cout << "\nAmount: " << x;
+
 	swap_m(a, n);
 	cout_m(a, n, size(a, n));
 }
