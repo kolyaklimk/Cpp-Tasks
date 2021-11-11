@@ -1,2 +1,0 @@
-﻿  Test.cpp
-LINK : fatal error LNK1104: cannot open file 'StaticLib1.lib'
