@@ -13,7 +13,6 @@ int main() {
 	string s1;
 	getline(cin, s1);
 	while (s1.length() > 80) getline(cin, s1);
-	s1 += ' ';
     int l = s1.length() ;
 	char* s = new char[l];
 	s1.copy(s, l, 0);
@@ -22,10 +21,11 @@ int main() {
 			s[i] = ' ';
 	double* r = (double*)malloc(w * sizeof(double));
 	for (i = 0; i < l;) {
-		while (s[i] < '0' || s[i] > '9') i++;
+		while (s[i] == ' ' && i + 1 < l) i++;
+		if (i + 1 == l) break;
 		u = 1;
 		g = i;
-		while (s[i + 1] != ' ' && i < l) {
+		while (s[i + 1] != ' ' && i+1 < l) {
 			i++;
 			u++;
 		}
@@ -52,4 +52,6 @@ int main() {
 	}
 	for (i = 0; i < w; i++)
 		cout << r[i] << " ";
+	delete[] s;
+	free(r);
 }
