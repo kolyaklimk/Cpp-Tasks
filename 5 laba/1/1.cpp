@@ -10,8 +10,8 @@ n x n (n = 10), причем значения aij определить согл�
 СТАТИЧЕСКАЯ БИБЛИОТЕКА*/
 
 #include <iostream>
-#pragma comment(lib, "StaticLib1.lib")
-#include "functions.h"
+#pragma comment(lib, "../x64/Debug/StaticLib1.lib")
+#include "../StaticLib1/functions.h"
 using namespace std;
 
 int main()

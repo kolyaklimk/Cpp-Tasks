@@ -9,8 +9,7 @@
 ДИНАМИЧЕСКАЯ БИБЛИОТЕКА*/
 
 #include <iostream>
-#pragma comment(lib, "Dll1.lib")
-#include "dll.h"
+#include <Windows.h>
 using namespace std;
 
 int main()
@@ -34,8 +33,16 @@ int main()
 		cin.ignore(9999, '\n');
 		cin >> a[i];
 	}
-	
+
+	HINSTANCE load;
+	load = LoadLibrary(L"Dll1.dll");
+	typedef double (*Fun) (int*, int, int, int);
+	Fun fun;
+	fun = (Fun)GetProcAddress(load, "fun");
+
 	cout << fun(a, n, 0, n / 3) * fun(a, n, n / 3, n);
+
+	FreeLibrary(load);
 
 	delete[] a;
 }

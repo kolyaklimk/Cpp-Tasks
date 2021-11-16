@@ -1,7 +1,7 @@
 #include "dll.h"
 #include <cmath>
 
-double fun(int* a, int n, int q, int k) {
+extern "C" __declspec(dllexport) double fun(int* a, int n, int q, int k) {
 	if (q == k)
 		return 1;
 	else

@@ -1,11 +1,11 @@
 #pragma once
 
-void transp(int** a, int** b, int x);
+void transp(int**, int**, int);
 
-void cout_m(int** a, int x, int size);
+void cout_m(int**, int, int);
 
-int size(int** a, int x);
+int size(int**, int);
 
-int sum(int** a, int x, int x1, int n);
+int sum(int**, int, int, int);
 
-void delete_m(int** a, int n);
+void delete_m(int**, int);
