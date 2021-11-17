@@ -20,6 +20,7 @@ int main()
 	while (cin.fail() || n < 1) {
 		cin.clear();
 		cin.ignore(9999, '\n');
+		cout << "N = ";
 		cin >> n;
 	}
 

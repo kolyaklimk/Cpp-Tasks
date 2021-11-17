@@ -17,7 +17,7 @@ void cin_m(int** a, int n, int k) {
 		for (int j = 0; j < k; j++) {
 			cout << "[" << i << "][" << j << "] = ";
 			cin >> a[i][j];
-			while (cin.fail() || a[i][j]>INT_MAX-2) {
+			while (cin.fail() || a[i][j]>INT_MAX-4) {
 				cin.clear();
 				cin.ignore(9999, '\n');
 				cout << "[" << i << "][" << j << "] = ";
@@ -54,15 +54,14 @@ void cout_m(int** a, int x, int x1, int size) {
 
 int main()
 {
-	int i, j, y, q1, q, g, g1, t;
+	int i, j, q1, q, g, g1, t;
 	float n, k;
-	t = 0;
-	y = 0;
+	int* y = 0;
 	cout << "n = ";
 	cin >> n;
 	cout << "k = ";
 	cin >> k;
-	while (cin.fail() || n < 1 || k < 1) {
+	while (cin.fail() || n < 2 || k < 2) {
 		cin.clear();
 		cin.ignore(9999, '\n');
 		cout << "incorrect value, n = ";
@@ -77,7 +76,7 @@ int main()
 
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < k; j++)
-			a[i][j] = INT_MAX-1;
+			a[i][j] = INT_MAX-2;
 
 	cin_m(a, n,k);
 	cout_m(a, n, k, size(a, n,k));
@@ -86,7 +85,7 @@ int main()
 		g = ceil(k / n);
 		g1 = g;
 		for (q = 0; q < n; q++) {
-			for (q1 = g; q1 < k; q1++)a[q][q1] = INT_MAX - 1;
+			for (q1 = g; q1 < k; q1++)a[q][q1] = INT_MAX - 2;
 			g += g1;
 		}
 	}
@@ -94,28 +93,23 @@ int main()
 		g1 = ceil(n / k);
 		g = n-g1;
 		for (q1 = k; q1 >= 0; q1--) {
-			for (q = g; q >= 0; q--) a[q][q1] = INT_MAX - 1;
+			for (q = g; q >= 0; q--) a[q][q1] = INT_MAX - 2;
 			g -= g1;
 		}
 	}
 
-	cout_m(a, n, k, size(a, n, k));
-
+	//cout_m(a, n, k, size(a, n, k));
+	
 	i = 0;
 	j = 0;
 	while (j < k) {
-		while (a[i][j] == INT_MAX-1) {
+		while (a[i][j] == INT_MAX-2) {
 			i++;
-			if (a[i][j - 1] % 2 == 0 && a[i][j] == INT_MAX - 1) {
+			if (a[i][j - 1] % 2 == 0 && a[i][j] == INT_MAX - 2 && b[y - 1] != a[i][j - 1]) {
 				b[y] = a[i][j - 1];
 				y++;
 				t++;
 			}
-		}
-		if (i != 0 && b[y - 1] == a[i][j - 1] && a[i - 1][j] == INT_MAX - 1 && n != k) {
-			b[y] = a[i][j - 1];
-			y++;
-			t++;
 		}
 		if (a[i][j] % 2 == 0) {
 			b[y] = a[i][j];
@@ -125,11 +119,15 @@ int main()
 			j++;
 	}
 	
-	i = n-1;
-	j = k-1;
-	if (a[i][j] % 2 == 0 && a[i-1][j] != INT_MAX - 1) {
-		b[y] = a[i][j];
-		t++;
+	j--;
+	i++;
+	while (i < n) {
+		if (a[i][j] % 2 == 0) {
+			b[y] = a[i][j];
+			t++;
+			y++;
+		}
+		i++;
 	}
 	
 	cout << "\n\n";

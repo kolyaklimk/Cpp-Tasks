@@ -16,7 +16,14 @@ using namespace std;
 
 int main()
 {
-	int i, j, z, n = 10;
+	int i, j, z, n;
+	cout << "N = ";
+	cin >> n;
+	while (cin.fail() || n < 1) {
+		cin.clear();
+		cin.ignore(9999, '\n');
+		cin >> n;
+	}
 
 	//массив А
 	int** a = new int*[n];
