@@ -170,8 +170,10 @@ int task3_1(int task, float n, float k,int q_, int q1_, int y_) {
 		i++;
 	}
 
-	if (task == 1) ret = a[q_][q1_];
-	if (task == 2) ret= b[y_];
+	switch (task) {
+	case 1:ret = a[q_][q1_]; break;
+	case 2: ret = b[y_]; break;
+	}
 
 	for (i = 0; i < n; i++)
 		delete[] a[i];
@@ -293,3 +295,154 @@ TEST(Task3_2, Test_swap_3) {
 }
 
 //////////////////////////////////////////////////////////////////////
+float task3_3(int task, int n, int q) {
+	int** a = new int* [n];
+	for (int i = 0; i < n; i++)
+		a[i] = new int[n];
+
+	int buf = 0;
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			a[i][j] = buf++;
+
+	int* b = new int[n * n / 2];
+
+	int m = 0, t = 0;
+	for (int q = 0; q < n; q++)
+		for (int q1 = 1; q1 < n; q1 += 2)
+			if (a[q][q1] % 2 != 0) {
+				b[m] = a[q][q1];
+				m++;
+				t++;
+			}
+
+	float sum = 0;
+	for (int i = 0; i < t; i++)
+		sum += b[i];
+	sum /= t;
+
+	int ret;
+	switch (task){
+	case 1: ret = b[q]; break;
+	case 2: ret = sum; break;
+	}
+
+	delete[] b;
+
+	for (int i = 0; i < n; i++)
+		delete[] a[i];
+	delete[] a;
+
+	return ret;
+}
+
+TEST(Task3_3, Test_new_m_1) {
+	EXPECT_EQ(task3_3(1, 10, 12), 25);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task3_3, Test_new_m_2) {
+	EXPECT_EQ(task3_3(1, 3, 1), 7);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task3_3, Test_new_m_3) {
+	EXPECT_EQ(task3_3(1, 7, 9), 43);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task3_3, Test_sum_1) {
+	EXPECT_EQ(task3_3(2, 10, 0), 50);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task3_3, Test_sum_2) {
+	EXPECT_EQ(task3_3(2, 3, 0), 4);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task3_3, Test_sum_3) {
+	EXPECT_EQ(task3_3(2, 7, 0), 24);
+	EXPECT_TRUE(true);
+}
+
+//////////////////////////////////////////////////////////////////////
+int rec1(int p, int q)
+{
+	if (p == q + 1) return 0;
+	if (p == 0) return 0 + rec1(p + 1, q);
+	if (p % 10 > 0) return  p % 10 + rec1(p + 1, q);
+	return p / 10 + rec1(p + 1, q);
+}
+
+TEST(Task_dop_1, Test_1) {
+	EXPECT_EQ(rec1(1,10), 46);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_1, Test_2) {
+	EXPECT_EQ(rec1(10, 20), 48);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_1, Test_3) {
+	EXPECT_EQ(rec1(30, 40), 52);
+	EXPECT_TRUE(true);
+}
+
+//////////////////////////////////////////////////////////////////////
+unsigned long long rec2(unsigned long long k, unsigned long long n, unsigned long long m)
+{
+	if (n == 0) return 1;
+	if (n & 1) return (k * rec2((k * k) % m, n / 2, m)) % m;
+	return rec2((k * k) % m, n / 2, m);
+}
+
+unsigned long long task_dop_2(unsigned long long k, unsigned long long n, unsigned long long t) {
+	unsigned long long m = 1;
+	for (int i = 0; i < t; i++) m *= 10;
+	return rec2(k % m, n, m);
+}
+
+TEST(Task_dop_2, Test_1) {
+	EXPECT_EQ(task_dop_2(1234, 1234, 4), 736);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_2, Test_2) {
+	EXPECT_EQ(task_dop_2(2323, 99999999999, 8), 39087387);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_2, Test_3) {
+	EXPECT_EQ(task_dop_2(4, 99999, 9), 494777344);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_2, Test_4) {
+	EXPECT_EQ(task_dop_2(888, 888, 8), 91255296);
+	EXPECT_TRUE(true);
+}
+
+//////////////////////////////////////////////////////////////////////
+unsigned long long rec3(unsigned long long a)
+{
+	if (a == 0) return 0;
+	else
+		return pow((a + 1) / 2, 2) + rec3(a / 2);
+}
+
+TEST(Task_dop_3, Test_1) {
+	EXPECT_EQ(rec3(7), 21);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_3, Test_2) {
+	EXPECT_EQ(rec3(1), 1);
+	EXPECT_TRUE(true);
+}
+
+TEST(Task_dop_3, Test_3) {
+	EXPECT_EQ(rec3(777), 201537);
+	EXPECT_TRUE(true);
+}

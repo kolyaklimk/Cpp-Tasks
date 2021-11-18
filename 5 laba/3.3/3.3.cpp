@@ -50,9 +50,21 @@ void cout_m(int** a, int x, int x1, int size) {
 	}
 }
 
+int new_m(int** a, int* b, int n) {
+	int m = 0, t = 0;
+	for (int q = 0; q < n; q++)
+		for (int q1 = 1; q1 < n; q1 += 2)
+			if (a[q][q1] % 2 != 0) {
+				b[m] = a[q][q1];
+				m++;
+				t++;
+			}
+	return t;
+}
+
 int main()
 {
-	int i, j, n;
+	int i, n;
 	cout << "N = ";
 	cin >> n;
 	while (cin.fail() || n < 1) {
@@ -71,14 +83,7 @@ int main()
 
 	int* b = new int[n * n / 2];
 
-	int m = 0, t = 0;
-	for (int q = 0; q < n; q++)
-		for (int q1 = 1; q1 < n; q1 += 2)
-			if (a[q][q1] % 2 != 0) {
-				b[m] = a[q][q1];
-				m++;
-				t++;
-			}
+	int t = new_m(a, b, n);
 
 	cout << "\n";
 	for (i = 0; i < t; i++)

@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace std;
 
-unsigned long long rec(unsigned int a)
+unsigned long long rec(unsigned long long a)
 {
 	if (a == 0) return 0;
 	else
@@ -22,7 +22,7 @@ unsigned long long rec(unsigned int a)
 
 int main()
 {
-	int a;
+	unsigned long long a;
 	cin >> a;
 	while (cin.fail() || a % 2 == 0 || a < 1) {
 		cin.clear();
