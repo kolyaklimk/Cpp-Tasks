@@ -12,7 +12,7 @@
 #include <iomanip>
 using namespace std;
 
-void cin_m(int** a, int n, int k) {
+void cin_m(int** a, float n, float k) {
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < k; j++) {
 			cout << "[" << i << "][" << j << "] = ";
@@ -26,7 +26,7 @@ void cin_m(int** a, int n, int k) {
 		}
 }
 
-int size(int** a, int x, int x1) {
+int size(int** a, float x, float x1) {
 	int w, m, m1;
 	w = 0;
 	m1 = 0;
@@ -40,10 +40,10 @@ int size(int** a, int x, int x1) {
 			}
 			if (m > m1) m1 = m;
 		}
-	return m1 + 1;
+	return m1 + 2;
 }
 
-void cout_m(int** a, int x, int x1, int size) {
+void cout_m(int** a, float x, float x1, int size) {
 	cout << "\n";
 	for (int q = 0; q < x; q++) {
 		for (int q1 = 0; q1 < x1; q1++)
@@ -52,58 +52,32 @@ void cout_m(int** a, int x, int x1, int size) {
 	}
 }
 
-int main()
-{
-	int i, j, q1, q, g, g1, t;
-	float n, k;
-	int* y = 0;
-	cout << "n = ";
-	cin >> n;
-	cout << "k = ";
-	cin >> k;
-	while (cin.fail() || n < 2 || k < 2) {
-		cin.clear();
-		cin.ignore(9999, '\n');
-		cout << "incorrect value, n = ";
-		cin >> n;
-		cout << "k = ";
-		cin >> k;
-	}
-	int* b = new int[max(n, k)];
-	int** a = new int* [n];
-	for (i = 0; i < n; i++)
-		a[i] = new int[k];
-
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < k; j++)
-			a[i][j] = INT_MAX-2;
-
-	cin_m(a, n,k);
-	cout_m(a, n, k, size(a, n,k));
-
+void del_hi_diag(int** a, float k, float n) {
 	if (k > n) {
-		g = ceil(k / n);
-		g1 = g;
-		for (q = 0; q < n; q++) {
-			for (q1 = g; q1 < k; q1++)a[q][q1] = INT_MAX - 2;
+		int g = floor(k / n);
+		int g1 = g;
+		for (int q = 0; q < n-1; q++) {
+			for (int q1 = g; q1 < k; q1++)a[q][q1] = INT_MAX - 2;
 			g += g1;
 		}
 	}
 	else {
-		g1 = ceil(n / k);
-		g = n-g1;
-		for (q1 = k; q1 >= 0; q1--) {
-			for (q = g; q >= 0; q--) a[q][q1] = INT_MAX - 2;
+		int g1 = ceil(n / k);
+		int g = n - g1;
+		for (int q1 = k-1; g>=0 && q1 > 0; q1--) {
+			for (int q = g; g >=0 && q >= 0; q--) a[q][q1] = INT_MAX - 2;
 			g -= g1;
 		}
 	}
+}
 
-	//cout_m(a, n, k, size(a, n, k));
-	
-	i = 0;
-	j = 0;
+int main_diag(int** a, int* b, float k, float n) {
+	int i = 0;
+	int j = 0;
+	int t = 0;
+	int y = 0;
 	while (j < k) {
-		while (a[i][j] == INT_MAX-2) {
+		while (a[i][j] == INT_MAX - 2) {
 			i++;
 			if (a[i][j - 1] % 2 == 0 && a[i][j] == INT_MAX - 2 && b[y - 1] != a[i][j - 1]) {
 				b[y] = a[i][j - 1];
@@ -116,9 +90,9 @@ int main()
 			y++;
 			t++;
 		}
-			j++;
+		j++;
 	}
-	
+
 	j--;
 	i++;
 	while (i < n) {
@@ -129,8 +103,44 @@ int main()
 		}
 		i++;
 	}
-	
+	return t;
+}
+
+int main()
+{
+	int i, q1, q, t;
+	float n, k;
+	cout << "n = ";
+	cin >> n;
+	cout << "k = ";
+	cin >> k;
+	while (cin.fail() || n < 2 || k < 2) {
+		cin.clear();
+		cin.ignore(9999, '\n');
+		cout << "incorrect value, n = ";
+		cin >> n;
+		cout << "k = ";
+		cin >> k;
+	}
+
+	int* b = new int[max(n, k)];
+	int** a = new int* [n];
+	for (i = 0; i < n; i++)
+		a[i] = new int[k];
+
+	cin_m(a, n,k);
+	cout_m(a, n, k, size(a, n,k));
+
+	del_hi_diag(a, k, n);
+	cout_m(a, n, k, size(a, n, k));
+	t = main_diag(a, b, k, n);
 	cout << "\n\n";
 	for (i = 0; i < t; i++)
 		cout << b[i] << " ";
+
+	for (i = 0; i < n; i++)
+		delete[] a[i];
+	delete[]a;
+
+	delete[]b;
 }

@@ -1,3 +1,11 @@
 ﻿  test.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(113,19): warning C4244: 'initializing': conversion from 'float' to 'size_t', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(115,22): warning C4244: 'initializing': conversion from 'float' to 'size_t', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(117,18): warning C4244: 'initializing': conversion from 'float' to 'size_t', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(125,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(133,10): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(134,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(135,15): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(256,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
 C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\Test1\test.cpp(33): warning C4715: 'task1': not all control paths return a value
   Test1.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\x64\Debug\Test1.exe

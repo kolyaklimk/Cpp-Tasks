@@ -89,4 +89,8 @@ int main()
 
 	swap_m(a, n);
 	cout_m(a, n, size(a, n));
+
+	for (int i = 0; i < n; i++)
+		delete[] a[i];
+	delete[]a;
 }

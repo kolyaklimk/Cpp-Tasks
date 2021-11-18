@@ -52,7 +52,7 @@ void cout_m(int** a, int x, int x1, int size) {
 
 int main()
 {
-	int i, j, n, x, y;
+	int i, j, n;
 	cout << "N = ";
 	cin >> n;
 	while (cin.fail() || n < 1) {
@@ -61,7 +61,6 @@ int main()
 		cout << "incorrect value, N = ";
 		cin >> n;
 	}
-	x = n / 2;
 
 	int** a = new int* [n];
 	for (i = 0; i < n; i++)
@@ -70,40 +69,26 @@ int main()
 	cin_m(a, n);
 	cout_m(a, n, n, size(a, n));
 
-	int** b = new int* [n];
-	for (i = 0; i < n; i++)
-		b[i] = new int[x];
+	int* b = new int[n * n / 2];
 
-	int m = 0, m1 = 0;
+	int m = 0, t = 0;
 	for (int q = 0; q < n; q++)
-		for (int q1 = 1; q1 < n; q1 += 2) {
+		for (int q1 = 1; q1 < n; q1 += 2)
 			if (a[q][q1] % 2 != 0) {
-				b[m][m1] = a[q][q1];
-				if (m1 + 1 < x) m1++;
-				else {
-					m++;
-					m1 = 0;
-				}
+				b[m] = a[q][q1];
+				m++;
+				t++;
 			}
-			else {
-				b[m][m1] = 0;
-				if (m1 + 1 < x) m1++;
-				else {
-					m++;
-					m1 = 0;
-				}
-			}
-		}
 
-	cout_m(b, n, x, size(a, n));
+	cout << "\n";
+	for (i = 0; i < t; i++)
+		cout << b[i] << " ";
 
-	m = 0; m1 = 0;
-	for (int q = 0; q < n; q++)
-		for (int q1 = 0; q1 < x; q1++) {
-			if (b[q][q1] != 0) m++;
-			m1 += b[q][q1];
-		}
+	float sum = 0;
+	for (i = 0; i < t; i++)
+		sum += b[i];
+	sum /= t;
 
-	if (m == 0) cout << "\nNo values";
-	else cout << "\nAverage = " << m1 / m;
+	if (t == 0) cout << "\nNo values";
+	else cout << "\nAverage = " << sum;
 }
