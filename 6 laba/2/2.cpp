@@ -4,18 +4,24 @@
 Найти, каких букв в тексте больше – гласных или согласных. */
 
 #include <iostream>
-#include <string>
+#include <Windows.h>
 using namespace std;
 
 int main() {
+	//SetConsoleCP(1251);
+	//SetConsoleOutputCP(1251);
 	setlocale(LC_ALL, "Russian");
-	int i, q = 0, w = 0;
-	string s1;
-	getline(cin, s1);
-	int l = s1.length();
-	char* s = new char[l];
-	s1.copy(s, l, 0);
-	for (i = 0; i < l; i++) {
+	//int i, q = 0, w = 0;
+	char gl[21];
+	strcpy(gl, "аиеёоуыэюяАИЕЁОУЫЭЮЯ");
+
+	char s[81];
+	cin.get(s, 81);
+
+
+	/*
+	for (i = 0; i < 81; i++) {
+
 		if (s[i] == 'e' || s[i] == 'i' || s[i] == 'o' || s[i] == 'u' || s[i] == 'a' || s[i] == 'y' ||
 			s[i] == 'E' || s[i] == 'I' || s[i] == 'O' || s[i] == 'U' || s[i] == 'A' || s[i] == 'Y')
 			q++;
@@ -28,4 +34,5 @@ int main() {
 		if (q < w) cout << "\nСогласных больше чем гласных";
 	}
 	else cout << "\nНет ни гласных, ни согласных";
+	*/
 }

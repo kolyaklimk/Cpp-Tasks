@@ -1,2 +1,2 @@
 ﻿  2.cpp
-  2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\2.exe
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\2\2.cpp(16,2): error C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.

@@ -4,28 +4,26 @@
 Вывести на экран числа этой строки в порядке возрастания их значений.*/
 
 #include <iostream>
-#include <string>
 using namespace std;
 
 int main() {
 	int i, u, q, g,q1, min, w = 0;
 	double sum, t;
-	string s1;
-	getline(cin, s1);
-	while (s1.length() > 80) getline(cin, s1);
-    int l = s1.length() ;
-	char* s = new char[l];
-	s1.copy(s, l, 0);
-	for (i = 0; i < l; i++)
+	char s[81];
+	cin.get(s, 81);
+
+	//замена "лишнего" на пробел
+	for (i = 0; i < 80; i++)
 		if (s[i] < '0' || s[i] > '9')
 			s[i] = ' ';
+
 	double* r = (double*)malloc(w * sizeof(double));
-	for (i = 0; i < l;) {
-		while (s[i] == ' ' && i + 1 < l) i++;
-		if (i + 1 == l) break;
+	for (i = 0; i < 80;) {
+		while (s[i] == ' ' && i + 1 < 80) i++;
+		if (i + 1 == 80) break;
 		u = 1;
 		g = i;
-		while (s[i + 1] != ' ' && i+1 < l) {
+		while (s[i + 1] != ' ' && i+1 < 80) {
 			i++;
 			u++;
 		}
@@ -40,6 +38,8 @@ int main() {
 		r[w - 1] = sum;
 		i += u+1;
 	}
+	
+	//сортировка
 	for (i = 0; i < w; i++) {
 		min = r[i];
 		q1 = i;
@@ -50,8 +50,8 @@ int main() {
 			}
 		swap(r[i], r[q1]);
 	}
+	
 	for (i = 0; i < w; i++)
 		cout << r[i] << " ";
-	delete[] s;
 	free(r);
 }
