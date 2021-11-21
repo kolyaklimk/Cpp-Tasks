@@ -8,31 +8,33 @@
 using namespace std;
 
 int main() {
-	//SetConsoleCP(1251);
-	//SetConsoleOutputCP(1251);
-	setlocale(LC_ALL, "Russian");
-	//int i, q = 0, w = 0;
-	char gl[21];
-	strcpy(gl, "аиеёоуыэюяАИЕЁОУЫЭЮЯ");
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
+	int w = 1, gl_ = 0, sog = 0;
+	char gl[21] = "аиеёоуыэюяАИЕЁОУЫЭЮЯ";
 
-	char s[81];
-	cin.get(s, 81);
-
-
-	/*
-	for (i = 0; i < 81; i++) {
-
-		if (s[i] == 'e' || s[i] == 'i' || s[i] == 'o' || s[i] == 'u' || s[i] == 'a' || s[i] == 'y' ||
-			s[i] == 'E' || s[i] == 'I' || s[i] == 'O' || s[i] == 'U' || s[i] == 'A' || s[i] == 'Y')
-			q++;
-		else
-			if (s[i] >= 'a' && s[i] <= 'z' || s[i] >= 'A' && s[i] <= 'Z')
-				w++;
+	char* s = (char*)malloc(w * sizeof(char));
+	while (cin >> s[w - 1]) {
+		if (cin.peek() == '\n') break;
+		s = (char*)realloc(s, ++w * sizeof(char));
 	}
-	if (q > 0 || w > 0) {
-		if (q > w) cout << "\nГласных больше чем согласных";
-		if (q < w) cout << "\nСогласных больше чем гласных";
+
+	for (int i = 0; i < w; i++) {
+		for (int j = 0; j < 21; j++)
+			if (gl[j] == s[i]) {
+				gl_++;
+				break;
+			}
+		if (s[i] > 'а' && s[i] < 'я' || s[i]>'А' && s[i] < 'Я') sog++;
+	}
+
+	for (int i = 0; i < w; i++)
+		cout << s[i];
+
+	if (sog > 0 || gl_ > 0) {
+		if (gl_ > sog) cout << "\nГласных больше чем согласных";
+		if (gl_ < sog) cout << "\nСогласных больше чем гласных";
+		if (gl_ == sog) cout << "\nСогласных = гласных";
 	}
 	else cout << "\nНет ни гласных, ни согласных";
-	*/
 }

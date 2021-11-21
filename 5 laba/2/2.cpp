@@ -37,9 +37,10 @@ int main()
 
 	HINSTANCE load;
 	load = LoadLibrary(L"Dll1.dll");
+
 	typedef double (*Fun) (int*, int, int, int);
-	Fun fun;
-	fun = (Fun)GetProcAddress(load, "fun");
+
+	Fun fun = (Fun)GetProcAddress(load, "fun");
 
 	cout << fun(a, n, 0, n / 3) * fun(a, n, n / 3, n);
 
