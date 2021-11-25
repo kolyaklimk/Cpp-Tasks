@@ -1,7 +1,1 @@
-﻿  10.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\10\10.cpp(12,27): warning C4101: 's2': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\10\10.cpp(11,38): warning C4101: 'k': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\10\10.cpp(12,23): warning C4101: 's1': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\10\10.cpp(12,31): warning C4101: 's3': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\10\10.cpp(13,12): warning C4101: 'D1': unreferenced local variable
-  10.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\Debug\10.exe
+﻿  10.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\Debug\10.exe

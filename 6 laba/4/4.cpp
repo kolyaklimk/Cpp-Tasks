@@ -1,5 +1,6 @@
-﻿// 4.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+﻿//Лабораторная 6, задача 4. Выполнена: Климкович Н. В.
+
+
 /*1 апреля 20?? года будет проведена реформа английского языка,
 позволяющая облегчить его освоение иностранцами и английскими
 школьниками. Во-первых, из алфавита уберут четыре буквы C, Q, W и X (на
@@ -30,38 +31,93 @@ kv, вместо x – ks, а вместо w – v. Во-вторых, соче�
 using namespace std;
 int main()
 {
-	int w = 1;
-
-	string* st = new string[w];
-
-	string* buf = new string[w];
-	
+	string st,buf;
 	for(;;) {
-		getline(cin, st[w-1]);
-		//if (st[w - 1].length() == 1) break;
+		getline(cin, buf);
+		if (buf.length() == 0) break;
+		st += buf;
+	}
+	int l = st.length();
+	int bu;
 
-
-		for (int i = 0; i < w; i++)
-			buf[i] = st[i];
-		delete[] st;
-		string* st = new string[++w];
-
-		for (int i = 0; i < w - 1; i++)
-			st[i] = buf[i];
-		delete[] buf;
-		string* buf = new string[w];
-
-
-		cout << st[w-2] << "\n";
+	for (int s = 0; s < l; s++) {
+		bu = st.find_first_of("bcdfghjklmnpqrstvwxz");
+		if (st[s + 1] == st[s]) st.erase(bu, 1);
 	}
 
+
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("qu");
+		if (bu != -1)st.replace(bu, 2, "kv");
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("x");
+		if (bu != -1) {
+			st.erase(bu, 1);
+			st.insert(bu, "ks");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("ph");
+		if (bu != -1) {
+			st.erase(bu, 2);
+			st.insert(bu, "f");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("you");
+		if (bu != -1) {
+			st.erase(bu, 3);
+			st.insert(bu, "u");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("oo");
+		if (bu != -1) {
+			st.erase(bu, 2);
+			st.insert(bu, "u");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("ee");
+		if (bu != -1) {
+			st.erase(bu, 2);
+			st.insert(bu, "i");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find("th");
+		if (bu != -1) {
+			st.erase(bu, 2);
+			st.insert(bu, "z");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find('c');
+		if (bu != -1) {
+			if (st[bu + 1] == 'e' || st[bu + 1] == 'i' || st[bu + 1] == 'y')
+				st.replace(bu, 1, "s");
+			else st.replace(bu, 1, "k");
+		}
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find('w');
+		if (bu != -1)st.replace(bu, 1, "v");
+	}
+
+	for (int s = 0; s < l; s++) {
+		bu = st.find('q');
+		if (bu != -1)st.replace(bu, 1, "k");
+	}
 	
-
-
-
-	for (int i = 0; i < w; i++)
-	cout << st[i] << "\n";
-
-	//int l = s1.length();
-	//char* s = new char[l];
+	cout << st;
 }
