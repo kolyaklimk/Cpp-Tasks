@@ -1,2 +1,4 @@
 ﻿  4.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\4\4.cpp(68,6): warning C4101: 'bu': unreferenced local variable
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\4\4.cpp(58,6): warning C4101: 'd': unreferenced local variable
   4.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\4.exe
