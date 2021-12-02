@@ -22,7 +22,7 @@ int main() {
 	for (i = 0; i < s.length(); i++)
 		if (s[i] == '-' && s[i+1] == ' ')
 			s[i] = ' ';
-	cout << s;
+
 	for (i = 0; i < s.length();) {
 		while (s[i] == ' ' && i + 1 < s.length()) i++;
 		if (i + 1 == s.length()) break;
@@ -43,6 +43,10 @@ int main() {
 		for (q = u + i - 1; q >= i; q--) {
 			sum += (s[q] - '0') * t;
 			t *= 10;
+			if (u > 250) {
+				sum = 0;
+				break;
+			}
 		}
 		sum1 += sum * o;
 		o = 1;
