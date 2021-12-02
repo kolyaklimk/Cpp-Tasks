@@ -1,0 +1,5 @@
+﻿  8.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\8\8.cpp(42,32): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\8\8.cpp(49,29): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\8\8.cpp(65,16): warning C4018: '<': signed/unsigned mismatch
+  8.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\8.exe

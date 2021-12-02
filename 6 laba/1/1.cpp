@@ -7,14 +7,17 @@
 using namespace std;
 
 int main() {
-	int i, u, q, g,q1, min, w = 0;
+	int i, u, q, g,q1, min, w = 0, o = 1;
 	double sum, t;
 	char s[81];
 	cin.get(s, 81);
 
 	//замена "лишнего" на пробел
 	for (i = 0; i < 80; i++)
-		if (s[i] < '0' || s[i] > '9')
+		if ((s[i] < '0' || s[i] > '9') && s[i] != '-')
+			s[i] = ' ';
+	for (i = 0; i < 80; i++)
+		if (s[i] == '-' && (s[i+1] < '0' || s[i+1] > '9'))
 			s[i] = ' ';
 
 	double* r = (double*)malloc(w * sizeof(double));
@@ -23,19 +26,25 @@ int main() {
 		if (i + 1 == 80) break;
 		u = 1;
 		g = i;
-		while (s[i + 1] != ' ' && i+1 < 80) {
+		while (s[i + 1] != ' ' && s[i + 1] != '-' && i+1 < 80) {
 			i++;
 			u++;
 		}
 		i = g;
 		t = 1;
 		sum = 0;
+		if (s[i] == '-') {
+			i++;
+			o = -1;
+			u--;
+		}
 		for (q = u + i - 1; q >= i; q--) {
 			sum += (s[q] - '0') * t;
 			t *= 10;
 		}
 		r = (double*)realloc(r, ++w * sizeof(double));
-		r[w - 1] = sum;
+		r[w - 1] = sum*o;
+		o = 1;
 		i += u+1;
 	}
 	

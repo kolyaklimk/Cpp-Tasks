@@ -1,4 +1,4 @@
 ﻿  6.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\6\6.cpp(31,16): warning C4101: 'b': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\6\6.cpp(31,9): warning C4101: 'i': unreferenced local variable
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\6\6.cpp(30,16): warning C4101: 'b': unreferenced local variable
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\6\6.cpp(30,9): warning C4101: 'i': unreferenced local variable
   6.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\6.exe
