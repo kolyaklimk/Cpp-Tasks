@@ -20,8 +20,8 @@ int main() {
 	for (;;) {
 		getline(cin, st);
 		d = st.length();
-		if (d > 105) {
-			cout << "\nString > 14 words, try again\n";
+		if (d > 105 || d < 2) {
+			cout << "\nTry again\n";
 			continue;
 		}
 		for (int e = 0; e < d; e++)

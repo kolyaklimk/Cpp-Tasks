@@ -38,19 +38,38 @@
 #include <iostream>
 #include <string>
 using namespace std;
-void search(string s, string t, int q, int r, int& y) {
-	if (s[q + 1] == t[r] && q + 1 < s.length() && q >= 0) {
+void search_r(string s, string t, int q, int r, int& y, int i) {
+	if (q + 1 < s.length() && q >= 0 && !i && s[q + 1] == t[r]) {
 		q++;
 		r++;
 		y++;
-		return search(s, t, q, r, y);
+		return search_r(s, t, q, r, y, i);
 	}
 	else {
-		if (s[q - 1] == t[r] && q < s.length() && q - 1 >= 0) {
+		if (q < s.length() && q - 1 >= 0 && s[q - 1] == t[r]) {
 			q--;
 			r++;
 			y++;
-			return search(s, t, q, r, y);
+			i++;
+			return search_r(s, t, q, r, y, i);
+		}
+		else return;
+	}
+}
+void search_l(string s, string t, int q, int r, int& y, int i) {
+	if (q < s.length() && q - 1 >= 0 && s[q - 1] == t[r] && !i) {
+		q--;
+		r++;
+		y++;
+		return search_l(s, t, q, r, y, i);
+	}
+	else {
+		if (q + 1 < s.length() && q >= 0 && s[q + 1] == t[r]) {
+			q++;
+			r++;
+			y++;
+			i++;
+			return search_l(s, t, q, r, y, i);
 		}
 		else return;
 	}
@@ -58,21 +77,40 @@ void search(string s, string t, int q, int r, int& y) {
 
 int main() {
 	string s,t;
-	int q, r = 0, y = 0, y1 = 0;
-	getline(cin, s);
-	getline(cin, t);
-
-	for (q = 0; q < s.length(); q++) {
-		if (s[q] == t[r]) {
-			r++;
-			y = 1;
-			search(s, t, q, r, y);
-			if (y > y1) y1 = y;
-			y = 0;
-			r = 0;
-		}
+	int q, r = 0, y = 0, y1, v;
+	cin >> v;
+	while (cin.fail() || v < 1 || v > 500) {
+		cin.clear();
+		cin.ignore(9999, '\n');
+		cin >> v;
 	}
+	cin.clear();
+	cin.ignore(9999, '\n');
 
-	if (y1 == t.length())cout << "YES";
-	else cout << "NO";
+	for (int d = 0; d < v; d++) {
+		getline(cin, s);
+		while (s.length() < 1 || s.length() > 500)
+			getline(cin, s);
+		getline(cin, t);
+		while (t.length() < 1 || t.length() > s.length() * 2 - 1)
+			getline(cin, t);
+		y1 = 0;
+		for (q = 0; q < s.length(); q++) {
+			if (s[q] == t[r]) {
+				r++;
+				y = 1;
+				search_r(s, t, q, r, y,0);
+				if (y > y1) y1 = y;
+				r = 1;
+				y = 1;
+				search_r(s, t, q, r, y, 0);
+				if (y > y1) y1 = y;
+				r = 0;
+			}
+		}
+
+		if (y1 == t.length())cout << "YES\n\n";
+		else cout << "NO\n\n";
+	}
+	return 0;
 }
