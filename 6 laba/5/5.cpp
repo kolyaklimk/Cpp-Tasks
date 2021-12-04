@@ -1,6 +1,5 @@
 ﻿//Лабораторная 6, задача 5. Выполнена: Климкович Н. В.
 
-
 /*Во многих прикладных задачах, таких как поиск в сети или расшифровка
 генома, требуется совершать некоторые действия со строками. Например,
 часто требуется по некоторым данным о строке восстановить ее саму.
@@ -12,10 +11,44 @@
 ограничениям. Так как это число может быть достаточно большим, то
 необходимо вывести его по модулю m.
 */
+
 #include <iostream>
 #include <string>
-#include <iomanip>
 using namespace std;
+
+int find(int L, int m, string s, string s2)
+{
+	int an = 1;
+	int z1 = s.length();
+	int z2 = s2.length();
+	if (L > z1 + z2)
+	{
+		for (int i = 0; i < L - z1 - z2; i++) an = (an * 26) % m;
+		an = (an * 2) % m;
+		return an;
+	}
+	else
+		if (L == z1 + z2) return 2;
+		else
+		{
+			an = 2;
+			int j = 0;
+			for (int i = L - z2; i < z1; i++, j++)
+				if (s[i] != s2[j])
+				{
+					an--;
+					break;
+				}
+			j = 0;
+			for (int i = L - z1; i < z2; i++, j++)
+				if (s2[i] != s[j])
+				{
+					an--;
+					break;
+				}
+			return an;
+		}
+}
 
 int main() {
 	string s, s2;
@@ -51,15 +84,6 @@ int main() {
 		while (s2.length() > 200) 
 			getline(cin, s2);
 
-		if (s2.length()==L || s.length() == L) {
-			cout << "0\n\n";
-			continue;
-		}
-		p = L - s2.length() - s.length();
-		if (p < 0) {
-			cout << "1\n\n";
-			continue;
-		}
-		cout << fmod(pow(26, p) * 2, m) << "\n\n";
+		cout << find(L, m, s, s2) << '\n';
 	}
 }

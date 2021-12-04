@@ -1,8 +1,24 @@
 ﻿  9.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(18,16): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(22,16): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(25,16): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(29,16): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(30,31): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(34,54): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(19,17): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(20,22): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(21,13): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(24,17): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(27,21): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(28,25): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(33,10): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(33,35): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(35,22): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(37,34): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(42,11): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(42,26): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(42,53): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(43,10): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(43,37): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(43,52): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(43,79): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(46,11): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(50,16): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(51,12): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(53,22): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\9\9.cpp(54,24): warning C4244: 'argument': conversion from 'double' to 'const unsigned int', possible loss of data
   9.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\9.exe

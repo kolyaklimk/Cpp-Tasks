@@ -255,12 +255,38 @@ TEST(TestTask4, Test2) {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int task5(double L, int m, string s, string s2) {
-	int p;
-	if (s2.length() == L || s.length() == L)return 0;
-	p = L - s2.length() - s.length();
-	if (p < 0) return 1;
-	return fmod(pow(26, p) * 2, m);
+int task5(int L, int m, string s, string s2)
+{
+	int an = 1;
+	int z1 = s.length();
+	int z2 = s2.length();
+	if (L > z1 + z2)
+	{
+		for (int i = 0; i < L - z1 - z2; i++) an = (an * 26) % m;
+		an = (an * 2) % m;
+		return an;
+	}
+	else
+		if (L == z1 + z2) return 2;
+		else
+		{
+			an = 2;
+			int j = 0;
+			for (int i = L - z2; i < z1; i++, j++)
+				if (s[i] != s2[j])
+				{
+					an--;
+					break;
+				}
+			j = 0;
+			for (int i = L - z1; i < z2; i++, j++)
+				if (s2[i] != s[j])
+				{
+					an--;
+					break;
+				}
+			return an;
+		}
 }
 
 TEST(TestTask5, Test1) {
@@ -495,51 +521,59 @@ TEST(TestTask8, Test6) {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 int task9(string s) {
-	int i, u, q, g, o = 1;
-	double sum, t, sum1 = 0;
+	double c = 0, fra, ex, sum = 0, tmp;
+	bool min, exMin;
 
-	//замена "лишнего" на пробел
-	for (i = 0; i < s.length(); i++)
-		if ((s[i] < '0' || s[i] > '9') && s[i] != '-')
-			s[i] = ' ';
-	s += ' ';
-	for (i = 0; i < s.length(); i++)
-		if (s[i] == '-' && s[i + 1] == ' ')
-			s[i] = ' ';
-	for (i = 0; i < s.length(); i++)
-		if (s[i] == '-' && s[i - 1] != ' ' && s[i + 1] != ' ')
-			s.insert(i, " ");
-
-	for (i = 0; i < s.length();) {
-		while (s[i] == ' ' && i + 1 < s.length()) i++;
-		if (i + 1 == s.length()) break;
-		u = 1;
-		g = i;
-		while (s[i + 1] != ' ' && s[i + 1] != '-' && i + 1 < s.length()) {
-			i++;
-			u++;
-		}
-		i = g;
-		t = 1;
-		sum = 0;
-		if (s[i] == '-') {
-			i++;
-			o = -1;
-			u--;
-		}
-		for (q = u + i - 1; q >= i; q--) {
-			sum += (s[q] - '0') * t;
-			t *= 10;
-			if (u > 250) {
-				sum = 0;
-				break;
+	while (c < s.length()) {
+		min = false;
+		if (isdigit(s[c])) {
+			if (c != 0 && s[c - 1] == '-') {
+				tmp = s[c] - '0';
+				min = true;
 			}
+			else tmp = s[c] - '0';
+			++c;
+
+			while (isdigit(s[c])) {
+				tmp = tmp * 10 + (s[c] - '0');
+				++c;
+			}
+
+			fra = 1;
+			if (s[c] == '.' && isdigit(s[c + 1])) {
+				++c;
+				while (isdigit(s[c])) {
+					fra *= 10;
+					tmp = tmp + (long double)(s[c] - '0') / fra;
+					++c;
+				}
+			}
+
+			if ((s[c] == 'e' || s[c] == 'E') && (isdigit(s[c + 1]) ||
+				(s[c + 1] == '+' && isdigit(s[c + 2])) || (s[c + 1] == '-' && isdigit(s[c + 2])))) {
+				exMin = false;
+				++c;
+				if (s[c] == '-') {
+					exMin = true;
+					++c;
+				}
+				else if (s[c] == '+') ++c;
+				ex = s[c] - '0';
+				++c;
+				while (isdigit(s[c])) {
+					ex = ex * 10 + (s[c] - '0');
+					++c;
+				}
+				if (exMin) ex *= -1;
+				tmp *= pow(10, ex);
+			}
+			if (min) tmp *= -1;
+
+			sum += tmp;
 		}
-		sum1 += sum * o;
-		o = 1;
-		i += u + 1;
+		++c;
 	}
-	return sum1;
+	return sum;
 }
 
 TEST(TestTask9, Test1) {

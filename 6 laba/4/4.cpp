@@ -98,6 +98,7 @@ int main()
 		if ((st[s] >= 'a' && st[s] <= 'z' || st[s] >= 'A' && st[s] <= 'Z') && st[s + 1] == st[s]) {
 			l--;
 			st.erase(s + 1, 1);
+			s--;
 		}
 	cout << st;
 }

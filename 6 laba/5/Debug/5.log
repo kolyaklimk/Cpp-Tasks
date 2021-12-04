@@ -1,1 +1,4 @@
-﻿  5.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\5.exe
+﻿  5.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\5\5.cpp(90,16): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\5\5.cpp(59,6): warning C4101: 'p': unreferenced local variable
+  5.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\6 laba\Debug\5.exe
