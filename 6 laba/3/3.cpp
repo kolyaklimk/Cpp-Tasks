@@ -52,14 +52,6 @@ int main() {
 		s[w - 1] = (char*)realloc(s[w - 1], ++w1 * sizeof(char));
 	}
 
-	/*
-	//вывод ввода
-	int st1 = 0;
-	for (int i = 0; i < w; i++, st1++)
-		for (int j = 0; j < st[st1]; j++)
-			cout << s[i][j];
-			*/
-	
 	for (int i = 0, st1 = 0; i < w-1; i++, st1++) {
 
 		char* buf = new char[st[st1]];

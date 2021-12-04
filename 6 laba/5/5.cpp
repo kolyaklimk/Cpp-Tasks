@@ -61,6 +61,5 @@ int main() {
 			continue;
 		}
 		cout << fmod(pow(26, p) * 2, m) << "\n\n";
-
 	}
 }

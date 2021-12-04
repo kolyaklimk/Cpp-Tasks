@@ -14,7 +14,7 @@
 using namespace std;
 
 int main() {
-	string st,buf,buf2;
+	string st,buf,buf2,buf3;
 	bool t = 0;
 	int d, q, q1, r = 0, w = 0;
 	for (;;) {
@@ -36,6 +36,7 @@ int main() {
 
 	while (st.find(' ') != -1) st.erase(st.find(' '), 1);
 	
+	buf3 = st;
 	buf2 = st;
 	d = st.length();
 	for (q1 = 1; q1 < d; q1++) {
@@ -73,6 +74,6 @@ int main() {
 			if (d+1> r) r = d +1;
 			buf2.erase(0, d + 1);
 		}
-
+	if (r > buf3.length()) r = buf3.length();
 	cout << r;
 }

@@ -21,20 +21,19 @@ int main() {
 
 	for (int i = 0; i < w; i++) {
 		for (int j = 0; j < 21; j++)
-			if (gl[j] == s[i]) {
+			if (gl[j] == s[i] && s[i] != '\0') {
 				gl_++;
 				break;
 			}
-		if (s[i] > 'а' && s[i] < 'я' || s[i]>'А' && s[i] < 'Я') sog++;
+		if (s[i] >= 'а' && s[i] <= 'я' || s[i]>='А' && s[i] <= 'Я') sog++;
 	}
-
-	for (int i = 0; i < w; i++)
-		cout << s[i];
-
+	sog -= gl_;
 	if (sog > 0 || gl_ > 0) {
 		if (gl_ > sog) cout << "\nГласных больше чем согласных";
 		if (gl_ < sog) cout << "\nСогласных больше чем гласных";
 		if (gl_ == sog) cout << "\nСогласных = гласных";
 	}
 	else cout << "\nНет ни гласных, ни согласных";
+
+	free(s);
 }

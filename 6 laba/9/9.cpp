@@ -22,6 +22,9 @@ int main() {
 	for (i = 0; i < s.length(); i++)
 		if (s[i] == '-' && s[i+1] == ' ')
 			s[i] = ' ';
+	for (i = 0; i < s.length(); i++)
+		if (s[i] == '-' && s[i - 1] != ' ' && s[i + 1] != ' ')
+			s.insert(i, " ");
 
 	for (i = 0; i < s.length();) {
 		while (s[i] == ' ' && i + 1 < s.length()) i++;
