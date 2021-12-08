@@ -10,87 +10,108 @@
 #include <string>
 using namespace std;
 
-int main()
-{
-	string s;
-	long double ten, size;
-	bool buf = 0;
-	int w = 1, size2, size3, buff;
-	char c[5], minus[] = "0";
-	long double* r = (long double*)malloc(w * sizeof(long double));
-	r[w - 1] = 0;
-	while (cin.peek() != '\n') {
-		for (int y = 4; y >= 0; y--) c[y]=' ';
-		ten = 1;
-		cin.get(c, 5);
-		for (int y = 3; y >= 0; y--) {
-			if (c[y] == '-') {
-				minus[0] = '1';
-				continue;
-			}
-			if (c[y] == ' ' || c[y] == '\0' || c[y]=='-') continue;
-			if (w != 1 && c[y] == '0') {
-				r[w - 2] *= 10;
-				continue;
-			}
-			r[w - 1] += (c[y] - '0') * ten;
-			ten *= 10;
-		 }
-		r = (long double*)realloc(r, ++w * sizeof(long double));
-		r[w - 1] = 0;
-	}
-	//for (int y = 0; y < w-1; y++) cout  << r[y] << " ";
-	//cout << "\n\n";
-
+string to_dva(string s, string dva, int t, int k, int c) {
 	for (;;) {
-		for (int y = 0; y < w - 1; y++) {
-			if (!r[y]) {
-				buf = 0;
-				continue;
+		for (int u = 0; u < s.length() - 1; u++) {
+			if (s[u] == '0') {
+				k = 0;
 			}
-
-			size = r[y];
-			size2 = 0;
-			while (size >= 1) {
-				size /= 10;
-				size2++;
-			}
-			if (buf) r[y] += pow(10, size2);
-
-			buf = fmod(r[y], 2);
-
-			r[y] = trunc(r[y]/2);
-
-			size = r[y];
-			size3 = 0;
-			while (size >= 1) {
-				size /= 10;
-				size3++;
-			}
-
-			buff = 0;
-			if (size3 < size2 && y != 0) r[y-1] *= 10;
-			if (y == w - 2) {
-				s += buf + '0';
-				buf = 0;
+			else {
+				k = 1;
+				break;
 			}
 		}
-		for (int kk = w - 2; kk > 0; kk--)
-			if (r[kk] == 0 && r[kk - 1] != 0)
-				for (int k = kk; k > 0; k--)
-					r[k] = r[k - 1];
-		//for (int y = 0; y < w - 1; y++) cout << r[y] << ' ';
-		//cout << "\n" << s << "\n\n\n";
-		if (r[w - 2] == 1 && r[w - 3] == 0 && r[0] == 0) {
-			s += '1';
+		if (s[s.length() - 1] == '1' && !k) {
+			dva += '1';
 			break;
 		}
-		if (r[w - 2] == 0) break;
+		if (s[s.length() - 1] == '0' && !k) {
+			dva += '0';
+			break;
+		}
+
+		for (int e = 0; e < s.length(); e++) {
+			c = s[e] - '0';
+			if (c % 2) {
+				c = (c + t * 10) / 2;
+				s[e] = c + '0';
+				t = 1;
+			}
+			else {
+				c = (c + t * 10) / 2;
+				s[e] = c + '0';
+				t = 0;
+			}
+			if (e == s.length() - 1) {
+				if (t) dva += '1';
+				else  dva += '0';
+				t = 0;
+			}
+		}
 	}
 
-	for (int j = 0, j1 = s.length() - 1; j < s.length() / 2; j++, j1--)
-		swap(s[j], s[j1]);
-	s.insert(0, minus);
-	s.insert(1, ".");
-	cout << s;
+	for (int j = 0, j1 = dva.length() - 1; j < dva.length() / 2; j++, j1--)
+		swap(dva[j], dva[j1]);
+
+	return dva;
+}
+
+string after_dot(string s, string s2, string dva) {
+	s2.erase(0, s2.find('.') + 1);
+	if (s2.length() > 10) s2.erase(8, s2.length() - 1);
+	s.erase(s.find('.'), s.length());
+	dva = to_dva(s, dva, 0, 0, 0);
+	dva += '.';
+	int size = s2.length() - 1;
+	double dota = 0;
+	for (int d = 0; d < s2.length(); d++) dota += pow(10, size--) * (s2[d] - '0');
+	size = s2.length();
+	for (int d = 0; d < 10; d++) {
+		dota *= 2;
+		if (dota - pow(10, size) > 0) {
+			dva += '1';
+			dota -= pow(10, size);
+		}
+		else dva += '0';
+	}
+	return dva;
+}
+
+int main() {
+	string s, dva, s2;
+	int p = 0;
+	bool dot = 0;
+	char minus[] = "0";
+	getline(cin, s);
+
+	if (s[0] == '-') {
+		minus[0] = '1';
+		s.erase(0, 1);
+	}
+
+	for (int e = 0; e < s.length(); e++) {
+		if (s[e] == '.' || s[0] == '.' || s[s.length() - 1] == '.') {
+			p++;
+			dot++;
+		}
+		while (p > 1) {
+			cout << "Incorrect value\n";
+			return 0;
+		}
+	}
+
+	for (int e = 0; e < s.length(); e++) {
+		while ((s[e] < '0' || s[e]>'9') && s[e]!='.') {
+			cout << "Incorrect value\n";
+			return 0;
+		}
+	}
+
+	if (!dot) dva = to_dva(s, dva, 0, 0, 0);
+	else dva = after_dot(s,s,dva);
+
+	dva.insert(0, minus);
+	dva.insert(1, ",");
+
+	cout << dva;
 }
