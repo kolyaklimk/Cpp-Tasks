@@ -71,7 +71,8 @@ string summa(string dva, string dva2) {
 
 	dva.erase(10, 1);
 	dva2.erase(10, 1);
-
+	dva += '0';
+	dva2 += '0';
 	if (dva.length() > dva2.length())
 		for (int y = 0, y1 = dva.length() - dva2.length(); y < y1; y++)
 			dva2 += '0';
@@ -111,6 +112,8 @@ string summa(string dva, string dva2) {
 	}
 	s.insert(10, ".");
 	swap_cod(s);
+	while (s[0] == '0') s.erase(0, 1);
+	if (s[0]=='.') s.insert(0, "0");
 	return s;
 }
 
@@ -159,6 +162,7 @@ string subtraction(string dva, string dva2) {
 	s.insert(10, ".");
 	swap_cod(s);
 	while (s[0] == '0') s.erase(0, 1);
+	if (s[0] == '.') s.insert(0, "0");
 	return s;
 }
 
