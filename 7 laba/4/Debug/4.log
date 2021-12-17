@@ -1,7 +1,7 @@
 ﻿  4.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(22,43): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(39,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(48,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(83,20): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(135,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(23,43): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(40,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(49,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(84,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\4\4.cpp(136,20): warning C4018: '<': signed/unsigned mismatch
   4.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\Debug\4.exe

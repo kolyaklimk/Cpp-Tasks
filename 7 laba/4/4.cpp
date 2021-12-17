@@ -10,6 +10,7 @@
 https://matworld.ru/calculator/perevod-chisel.php
 https://poschitat.online/shestnadcaterichnyi-kalkulyator
 https://planetcalc.ru/2096/
+https://calculatori.ru/slozhenie.html
 
 9) в одиннадцатеричной*/
 
@@ -157,7 +158,7 @@ string subtraction(string dva, string dva2) {
 	}
 	s.insert(10, ".");
 	swap_cod(s);
-	if (s[0] == '0') s.erase(0, 1);
+	while (s[0] == '0') s.erase(0, 1);
 	return s;
 }
 
