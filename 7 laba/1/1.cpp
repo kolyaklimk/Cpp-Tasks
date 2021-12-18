@@ -31,36 +31,37 @@ long double to_ten(long double buf, long double a, long double b, int t) {
 
 int main()
 {
-	long double a, b = 0, ten = 1, ele = 0;
-	int t = 0, minus = 1;
-	string s;
-	for (;;) {
+	long double a, b, ten = 1, ele = 0, s, o;
+	int t = 0, minus = 1;	
+	string l;
+	cin >> a;
+	while (cin.fail() || chek_nine(a, a) == -1 || a > 1e15 || a-trunc(a)!=0) {
+		cin.clear();
+		cin.ignore(9999, '\n');
 		cin >> a;
-		while (cin.fail() || chek_nine(a, a) == -1) {
-			cin.clear();
-			cin.ignore(9999, '\n');
-			cin >> a;
-		}
-
-
-
-
-
-
-
-
-		if (a < 0) {
-			minus = -1;
-			a *= -1;
-		}
-		b = to_ten(a, a, 0, 0);
-		while (b >= 1) {
-			ele += fmod(b, 11) * ten;
-			b = trunc(b / 11);
-			ten *= 10;
-		}
-		cout << fixed << ele * minus;
-		return 0;
 	}
+	if (a < 0) {
+		minus = -1;
+		a *= -1;
+	}
+	b = to_ten(a, a, 0, 0);
+	s = b;
+	while (b >= 1) {
+		ele += fmod(b, 11) * ten;
+		b = trunc(b / 11);
+		ten *= 10;
+	}
+	cout << fixed << ele * minus;
 	///////////////////////////////////////////////////////////////////////////////////
+	while (s >= 1) {
+		o = fmod(s, 11);
+		if (o == 10) l += 'A';
+		else l += o + '0';
+		s = trunc(s / 11);
+	}
+
+	for (int j = 0, j1 = l.length() - 1; j < l.length() / 2; j++, j1--)
+		swap(l[j], l[j1]);
+	if (minus == -1) l.insert(0, "-");
+	cout << '\n' << l;
 }

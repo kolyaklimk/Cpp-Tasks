@@ -230,11 +230,7 @@ int main() {
 
 	if (!cin_to_dop(s, dva)) return 0;
 	if (!cin_to_dop(s2, dva2)) return 0;
-
-	cout << dva << " \n" << dva2 << " \n\n";
-
 	s = summa(dva, dva2);
-	cout << s << "\n\n";
 	char minus[2];
 	minus[0] = s[0];
 	s = dop_code(s, minus);
