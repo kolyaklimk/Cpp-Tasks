@@ -47,7 +47,7 @@ int main()
 	for (int a = 0; a < t; a++) {
 		tt = 0;
 		cin >> n;
-		while (cin.fail() || t < 1 || t > 1e9) {
+		while (cin.fail() || n < 1 || n > 1e9) {
 			cin.clear();
 			cin.ignore(9999, '\n');
 			cout << "incorrect value, n = ";

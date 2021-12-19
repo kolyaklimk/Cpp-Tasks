@@ -11,22 +11,45 @@
 #include <iostream>
 using namespace std;
 
-int main() {
+int main()
+{
 	setlocale(LC_ALL, "Russian");
-	int b, t, r;
-	cout << "Номер бочки в которой яд: ";
-	cin >> b;
-	while (cin.fail() || b < 1 || b > 240) {
+	int t, g, bochka;
+	cout << "Время смерти(мин): ";
+	cin >> t;
+	cout << "раб: ";
+	cin >> g;
+	while (cin.fail() || t < 1 || t > 1440 || g < 1 || g > 5) {
 		cin.clear();
 		cin.ignore(9999, '\n');
-		cout << "\nНомер бочки в которой яд: ";
-		cin >> b;
+		cout << "Время смерти(мин): ";
+		cin >> t;
+		cout << "раб: ";
+		cin >> g;
 	}
-	if (b > 0 && b < 49) r = 1;
-	if (b > 48 && b < 97) r = 2;
-	if (b > 96 && b < 145) r = 3;
-	if (b > 144 && b < 193) r = 4;
-	if (b > 192 && b < 241) r = 5;
-
-	cout << "Раб: " << r << "\nВремя смерти: " << (b-(r-1)*48)/2.0+24 << " ч.";
+	if (g == 1) {
+		t /= 30;
+		bochka = t;
+		cout << bochka;
+	}
+	if (g == 2) {
+		t /= 30;
+		bochka = t + 48;
+		cout << bochka;
+	}
+	if (g == 3) {
+		t /= 30;
+		bochka = t + 96;
+		cout << bochka;
+	}
+	if (g == 4) {
+		t /= 30;
+		bochka = t + 144;
+		cout << bochka;
+	}
+	if (g == 5) {
+		t /= 30;
+		bochka = t + 192;
+		cout << bochka;
+	}
 }

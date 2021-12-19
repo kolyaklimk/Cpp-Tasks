@@ -171,10 +171,8 @@ int main() {
 
 	if (!cin_to_dop(s)) return 0;
 	if (!cin_to_dop(s2)) return 0;
-	 
 	s3 = summa(s, s2);
-	cout << "\nSum: " << s3;
-
+	cout << "\nSum: " << s3; 
 	s3 = subtraction(s, s2);
 	cout << "\n\nSubtraction: " << s3;
 }

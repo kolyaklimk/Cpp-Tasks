@@ -1,0 +1,40 @@
+﻿  test.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(39,15): warning C4244: 'argument': conversion from 'long double' to '_Elem', possible loss of data
+          with
+          [
+              _Elem=char
+          ]
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(43,41): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(65,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(83,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(103,43): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(117,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(141,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(152,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(183,43): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(189,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(207,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(240,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(265,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(275,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(305,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(310,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(317,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(374,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(421,43): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(438,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(447,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(483,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(537,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(597,43): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(616,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(642,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(700,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(717,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(832,12): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(879,41): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(904,14): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(581): warning C4715: 'task4': not all control paths return a value
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(812): warning C4715: 'task7': not all control paths return a value
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\tests\test.cpp(858): warning C4715: 'task8': not all control paths return a value
+  tests.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\Debug\tests.exe

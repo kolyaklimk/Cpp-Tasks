@@ -54,7 +54,6 @@ void change(string& s2) {
 	string buf = s2 + '0', buf2;
 	int c = 1;
 	for (int a = 0; a < buf.length(); a++) {
-			cout << "\n\n" << buf;
 		if (buf[a] == buf[a + 1]) {
 			c++;
 			continue;
@@ -143,9 +142,7 @@ int main() {
 	while (s.length() == 2) subtraction(s, "10", s2, '3');
 	while ((s[0] - '0') % 5 == 0) subtraction(s, "5", s2, '2');
 	while (s.length()) subtraction(s, "1", s2, '1');
-	cout << "\n\n" << s2;
 	change(s2);
-	cout << "\n\n\n" << s2<< "\n\n";
 	change2(s2);
 	cout << "\n\n" << s2;
 }
