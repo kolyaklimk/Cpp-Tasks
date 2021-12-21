@@ -55,64 +55,55 @@ struct Cex {
 	int amount = 0;
 	short number = 0;
 };
-void shekerSort(Cex mass[], int count)
-{
-	Cex t;
-	int left = 0, right = count - 1; // левая и правая границы сортируемой области массива
-	int flag = 1;  // флаг наличия перемещений
-	// Выполнение цикла пока левая граница не сомкнётся с правой
-	// и пока в массиве имеются перемещения
-	while ((left < right) && flag > 0)
-	{
-		flag = 0;
-		for (int i = left; i < right; i++)  //двигаемся слева направо
-		{
-			if (mass[i].name[0] > mass[i + 1].name[0]) // если следующий элемент меньше текущего,
-			{             // меняем их местами
-				t = mass[i];
-				mass[i] = mass[i + 1];
-				mass[i + 1] = t;
-				flag = 1;      // перемещения в этом цикле были
-			}
-		}
-		right--; // сдвигаем правую границу на предыдущий элемент
-		for (int i = right; i > left; i--)  //двигаемся справа налево
-		{
-			if (mass[i - 1].name[0] > mass[i].name[0]) // если предыдущий элемент больше текущего,
-			{            // меняем их местами
-				t = mass[i];
-				mass[i] = mass[i - 1];
-				mass[i - 1] = t;
-				flag = 1;    // перемещения в этом цикле были
-			}
-		}
-		left++; // сдвигаем левую границу на следующий элемент
-	}
-}
 bool correct(string a) {
 	for (int u = 0; u < a.length(); u++)
 		if (a[u] < 'a' && a[u]>'Z' || a[u] < 'A' || a[u]>'z')
 			return 1;
 	return 0;
 }
-
-int main() {
-	setlocale(LC_ALL, "Russian");
-	int m;
-	bool b = 0;
-	cout << "Количество цехов: ";
-	cin >> m;
-	while (cin.fail() || m < 1) {
-		clear_m();
-		cout << "\nВведите корректное значение: ";
-		cin >> m;
+void cout_s(Cex* ceh, int m) {
+	cout << '\n';
+	for (int y = 0; y < m; y++) 
+		cout  << ceh[y].name << ", " << ceh[y].amount << " шт.; " << "Цех " << ceh[y].number << '\n';
+}
+void shekerSort(Cex* mass, int count){
+	Cex t;
+	int left = 0, right = count - 1;
+	int flag = 1; 
+	while ((left < right) && flag > 0)
+	{
+		flag = 0;
+		for (int i = left; i < right; i++) 
+		{
+			if (mass[i].name[0] < mass[i + 1].name[0]) 
+			{
+				t = mass[i];
+				mass[i] = mass[i + 1];
+				mass[i + 1] = t;
+				flag = 1; 
+			}
+		}
+		right--; 
+		for (int i = right; i > left; i--) 
+		{
+			if (mass[i - 1].name[0] < mass[i].name[0])
+			{
+				t = mass[i];
+				mass[i] = mass[i - 1];
+				mass[i - 1] = t;
+				flag = 1;
+			}
+		}
+		left++;
 	}
-	Cex* ceh = new Cex[m];
-
-	for (int y = 0; y < m; y++) {
+	cout_s(mass, count);
+}
+void cin_s(Cex* ceh, int zero, int m) {
+	bool b,k;
+	for (int y = zero; y < m + zero; y++) {
 		b = 0;
 		clear_m();
-		cout << "\nЦех " << y+1 << "\nНаименование изделия: ";
+		cout << "\nЦех " << y + 1 << "\nНаименование изделия: ";
 		getline(cin, ceh[y].name);
 		b = correct(ceh[y].name);
 		while (ceh[y].name.length() == 0 || b) {
@@ -129,10 +120,157 @@ int main() {
 			cout << "Введите корректное значение: ";
 			cin >> ceh[y].amount;
 		}
-		ceh[y].number = y+1;
+		cout << "Номер цеха: ";
+		cin >> ceh[y].number;
+		k = 0;
+		for (int g = 0; g < y; g++) {
+			if (ceh[y].number == ceh[g].number) {
+				k++;
+				break;
+			}
+		}
+		while (cin.fail() || ceh[y].number < 1 || k) {
+			clear_m();
+			cout << "Введите корректное значение: ";
+			cin >> ceh[y].number;
+			k = 0;
+			for (int g = 0; g < y; g++) {
+				if (ceh[y].number == ceh[g].number) {
+					k++;
+					break;
+				}
+			}
+		}
 	}
-	
-	shekerSort(ceh, 5);
-	cout << "\n\nОтсортированный список:\n\n";
-	for (int y = 0; y < m; y++) cout << ceh[y].name << ", " << ceh[y].amount << " шт.; " << "Цех " << ceh[y].number << '\n';
+	cout_s(ceh, m);
+}
+void dop(Cex*& ceh, int& m) {
+	int y = m;
+	cout << "Сколько цехов добавить (0=назад): ";
+	cin >> y;
+	if (!y) return;
+	while (cin.fail() || y < 1) {
+		clear_m();
+		cout << "\nВведите корректное значение (0=назад): ";
+		cin >> y;
+		if (!y) return;
+	}
+	Cex* buf = new Cex[m];
+	for (int u = 0; u < m; u++) {
+		buf[u] = ceh[u];
+	}
+	delete[] ceh;
+	ceh = new Cex[m+y];
+	for (int u = 0; u < m; u++) {
+		ceh[u] = buf[u];
+	}
+	delete[] buf;
+	cin_s(ceh, m, y);
+	m += y;
+	cout_s(ceh, m);
+}
+void delete_s(Cex*& ceh, int& m) {
+	short d;
+	bool r = 0;
+	cout << "Какой цех из списка удалить? (0=назад) ";
+	cin >> d;
+	if (!d) return;
+	while (cin.fail() || d < 1) {
+		clear_m();
+		cout << "\nВведите корректное значение (0=назад): ";
+		cin >> d;
+		if (!d) return;
+	}
+	for (int u = 0; u < m; u++) {
+		if (ceh[u].number == d) {
+			d = u;
+			r = 1;
+			break;
+		}
+	}
+	if (!r) {
+		cout << "В списке нет такого цеха";
+		return;
+	}
+	for (int u = d; u < m-1; u++)
+		ceh[u] = ceh[u + 1];
+	Cex* buf = new Cex[--m];
+	for (int u = 0; u < m; u++) {
+		buf[u] = ceh[u];
+	}
+	delete[] ceh;
+	ceh = new Cex[m];
+	for (int u = 0; u < m; u++) {
+		ceh[u] = buf[u];
+	}
+	delete[] buf;
+	cout_s(ceh, m);
+}
+void detail(Cex*& ceh, int m) {
+	bool k=0;
+	int j, i;
+	cout << "Номер цеха (0=назад): ";
+	cin >> j;
+	if (!j) return;
+	for (int g = 0; g < m; g++) {
+		if (j == ceh[g].number) {
+			i = g;
+			k++;
+			break;
+		}
+	}
+	while (cin.fail() || j < 1 || !k) {
+		clear_m();
+		cout << "Введите корректное значение (0=назад): ";
+		cin >> j;
+		k = 0;
+		for (int g = 0; g < m; g++) {
+			if (j == ceh[g].number) {
+				i = g;
+				k++;
+				break;
+			}
+		}
+		if (!j) return;
+	}
+	cout << ceh[i].amount << " шт.";
+}
+
+int main() {
+	setlocale(LC_ALL, "Russian");
+	int m;
+	cout << "Количество цехов: ";
+	cin >> m;
+	while (cin.fail() || m < 1) {
+		clear_m();
+		cout << "\nВведите корректное значение: ";
+		cin >> m;
+	}
+	Cex* ceh = new Cex[m];
+	cin_s(ceh, 0, m);
+	for (;;) {
+		cout << "\n\n		Выберите пункт:" <<
+			"\n		1 - просмотр полного списка"<<
+			"\n		2 - отсортировать список" <<
+			"\n		3 - дополнить список" <<
+			"\n		4 - удаление одного элемента из списка" <<
+			"\n		5 - количество выпущенных изделий определённого цеха" <<
+			"\n		6 - выход\n";
+		int l;
+		cin >> l;
+		while (cin.fail() || l < 1 || l>6) {
+			clear_m();
+			cout << "\nВведите корректное значение: ";
+			cin >> l;
+		}
+		switch (l)
+		{
+		case 1: cout_s(ceh, m); break;
+		case 2: shekerSort(ceh, m); break;
+		case 3: dop(ceh, m); break;
+		case 4: delete_s(ceh, m); break;
+		case 5: detail(ceh, m); break;
+		case 6: return 0; break;
+		}
+	}
 }
