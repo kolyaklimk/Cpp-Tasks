@@ -1,0 +1,5 @@
+﻿  2.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\8 laba\2\2.cpp(45,14): warning C4834: discarding return value of function with 'nodiscard' attribute
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\8 laba\2\2.cpp(197,7): warning C4101: 'buf': unreferenced local variable
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\8 laba\2\2.cpp(370,14): warning C4834: discarding return value of function with 'nodiscard' attribute
+  2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\8 laba\Debug\2.exe

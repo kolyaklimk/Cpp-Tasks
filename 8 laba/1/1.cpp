@@ -38,7 +38,9 @@
 #include <iostream>
 #include <cmath>
 #include <string>
+#include <iomanip>
 #include <Windows.h>
+#pragma warning(disable : 4996)
 using namespace std;
 
 void clear_m() {
@@ -47,24 +49,37 @@ void clear_m() {
 }
 void error(int a) {
 	clear_m();
-	cout << "\nВведите корректное значение: ";
-	cin >> a;
+	printf("\nВведите корректное значение: ");
+	scanf("%d", &a);
+
 }
 struct Cex {
-	string name;
-	int amount = 0;
-	short number = 0;
+	char name[100];
+	int amount;
+	int number;
+	int amount_min;
+	int amount_max;
 };
-bool correct(string a) {
-	for (int u = 0; u < a.length(); u++)
-		if (a[u] < 'a' && a[u]>'Z' || a[u] < 'A' || a[u]>'z')
-			return 1;
-	return 0;
+void max_s(Cex*& ceh, int m) {
+	int buf = ceh[0].amount;
+	for (int a = 0; a < m; a++) 
+		if (buf < ceh[a].amount) 
+			buf = ceh[a].amount;
+	for (int a = 0; a < m; a++) ceh[a].amount_max = buf;
+}
+void min_s(Cex*& ceh, int m) {
+	int buf = ceh[0].amount;
+	for (int a = 0; a < m; a++)
+		if (buf > ceh[a].amount)
+			buf = ceh[a].amount;
+	for (int a = 0; a < m; a++) ceh[a].amount_min = buf;
 }
 void cout_s(Cex* ceh, int m) {
-	cout << '\n';
+	min_s(ceh, m);
+	max_s(ceh, m);
+	printf("\n");
 	for (int y = 0; y < m; y++) 
-		cout  << ceh[y].name << ", " << ceh[y].amount << " шт.; " << "Цех " << ceh[y].number << '\n';
+		printf("%s, %d шт.; Цех %d\n", ceh[y].name, ceh[y].amount, ceh[y].number);
 }
 void shekerSort(Cex* mass, int count){
 	Cex t;
@@ -99,45 +114,59 @@ void shekerSort(Cex* mass, int count){
 	cout_s(mass, count);
 }
 void cin_s(Cex* ceh, int zero, int m) {
-	bool b,k;
-	for (int y = zero; y < m + zero; y++) {
-		b = 0;
+	bool k;
+	int p;
+	for (int y = zero; y < m + zero;) {
 		clear_m();
-		cout << "\nЦех " << y + 1 << "\nНаименование изделия: ";
-		getline(cin, ceh[y].name);
-		b = correct(ceh[y].name);
-		while (ceh[y].name.length() == 0 || b) {
-			b = 0;
-			cout << "Введите корректное значение: ";
-			getline(cin, ceh[y].name);
-			b = correct(ceh[y].name);
-		}
-
-		cout << "Количество: ";
-		cin >> ceh[y].amount;
-		while (cin.fail() || ceh[y].amount < 1) {
+		printf("\nКоличество продукций, который выпускает цех: ");
+		scanf("%d", &p);
+		while (cin.fail() || p<1  || p>m) {
 			clear_m();
-			cout << "Введите корректное значение: ";
-			cin >> ceh[y].amount;
+			printf("Введите корректное значение: ");
+			scanf("%d", &p);
 		}
-		cout << "Номер цеха: ";
-		cin >> ceh[y].number;
-		k = 0;
-		for (int g = 0; g < y; g++) {
-			if (ceh[y].number == ceh[g].number) {
-				k++;
-				break;
+		for (int x = 0; x < p; x++,y++) {
+			clear_m();
+			printf("\nНаименование изделия (100 символов): ");
+			cin.get(ceh[y].name, 100);
+			while (ceh[y].name[0] == '\0') {
+				clear_m();
+				printf("Введите корректное значение: ");
+				cin.get(ceh[y].name, 100);
 			}
-		}
-		while (cin.fail() || ceh[y].number < 1 || k) {
 			clear_m();
-			cout << "Введите корректное значение: ";
-			cin >> ceh[y].number;
+			printf("Количество: ");
+			scanf("%d", &ceh[y].amount);
+
+			while (cin.fail() || ceh[y].amount < 1) {
+				clear_m();
+				printf("Введите корректное значение: ");
+				scanf("%d", &ceh[y].amount);
+			}
+			if (x > 0) {
+				ceh[y].number = ceh[y - 1].number;
+				continue;
+			}
+			clear_m();
+			printf("Номер цеха: ");
+			scanf("%d", &ceh[y].number);
 			k = 0;
 			for (int g = 0; g < y; g++) {
 				if (ceh[y].number == ceh[g].number) {
 					k++;
 					break;
+				}
+			}
+			while (cin.fail() || ceh[y].number < 1 || k) {
+				clear_m();
+				printf("Введите корректное значение: ");
+				scanf("%d", &ceh[y].number);
+				k = 0;
+				for (int g = 0; g < y; g++) {
+					if (ceh[y].number == ceh[g].number) {
+						k++;
+						break;
+					}
 				}
 			}
 		}
@@ -146,15 +175,14 @@ void cin_s(Cex* ceh, int zero, int m) {
 }
 void dop(Cex*& ceh, int& m) {
 	int y = m;
-	cout << "Сколько цехов добавить (0=назад): ";
-	cin >> y;
-	if (!y) return;
-	while (cin.fail() || y < 1) {
+	printf("Сколько продукции добавить (0=назад): ");
+	scanf("%d", &y);
+	while (cin.fail() || y < 0) {
 		clear_m();
-		cout << "\nВведите корректное значение (0=назад): ";
-		cin >> y;
-		if (!y) return;
+		printf("\nВведите корректное значение (0=назад): ");
+		scanf("%d", &y);
 	}
+	if (y==0) return;
 	Cex* buf = new Cex[m];
 	for (int u = 0; u < m; u++) {
 		buf[u] = ceh[u];
@@ -167,30 +195,41 @@ void dop(Cex*& ceh, int& m) {
 	delete[] buf;
 	cin_s(ceh, m, y);
 	m += y;
-	cout_s(ceh, m);
 }
 void delete_s(Cex*& ceh, int& m) {
-	short d;
+	int d;
+	char da[100];
 	bool r = 0;
-	cout << "Какой цех из списка удалить? (0=назад) ";
-	cin >> d;
-	if (!d) return;
-	while (cin.fail() || d < 1) {
+	clear_m();
+	printf("\nНаименование продукции для удаления (0=назад): ");
+	cin.get(da, 100);
+	while (da[0] == '\0') {
 		clear_m();
-		cout << "\nВведите корректное значение (0=назад): ";
-		cin >> d;
-		if (!d) return;
+		printf("Введите корректное значение: ");
+		cin.get(da, 100);
 	}
-	for (int u = 0; u < m; u++) {
-		if (ceh[u].number == d) {
-			d = u;
+	if (da[0] == '0' && da[1] == '\0') {
+		return;
+	}
+	int h;
+	for (h = 0; h < m; h++) {
+		if (ceh[h].name[0] == da[0]) {
 			r = 1;
+			d = h;
 			break;
 		}
 	}
 	if (!r) {
-		cout << "В списке нет такого цеха";
+		printf("В списке нет такой продукции");
 		return;
+	}
+	for (int j = 0; j < 100; j++) {
+		if (ceh[h].name[j] == '\0' && da[j] == '\0') break;
+		if (ceh[h].name[j] == da[j]) continue;
+		else {
+			printf("В списке нет такой продукции");
+			return;
+		}
 	}
 	for (int u = d; u < m-1; u++)
 		ceh[u] = ceh[u + 1];
@@ -207,61 +246,73 @@ void delete_s(Cex*& ceh, int& m) {
 	cout_s(ceh, m);
 }
 void detail(Cex*& ceh, int m) {
-	bool k=0;
-	int j, i;
-	cout << "Номер цеха (0=назад): ";
-	cin >> j;
-	if (!j) return;
-	for (int g = 0; g < m; g++) {
-		if (j == ceh[g].number) {
-			i = g;
-			k++;
+	int d;
+	char da[100];
+	bool r = 0;
+	clear_m();
+	printf("\nНаименование продукции для просмотра (0=назад): ");
+	cin.get(da, 100);
+	while (da[0] == '\0') {
+		clear_m();
+		printf("Введите корректное значение: ");
+		cin.get(da, 100);
+	}
+	if (da[0] == '0' && da[1] == '\0') {
+		return;
+	}
+	int h;
+	for (h = 0; h < m; h++) {
+		if (ceh[h].name[0] == da[0]) {
+			r = 1;
+			d = h;
 			break;
 		}
 	}
-	while (cin.fail() || j < 1 || !k) {
-		clear_m();
-		cout << "Введите корректное значение (0=назад): ";
-		cin >> j;
-		k = 0;
-		for (int g = 0; g < m; g++) {
-			if (j == ceh[g].number) {
-				i = g;
-				k++;
-				break;
-			}
-		}
-		if (!j) return;
+	if (!r) {
+		printf("В списке нет такой продукции");
+		return;
 	}
-	cout << ceh[i].amount << " шт.";
+	for (int j = 0; j < 100; j++) {
+		if (ceh[h].name[j] == '\0' && da[j] == '\0') break;
+		if (ceh[h].name[j] == da[j]) continue;
+		else {
+			printf("В списке нет такой продукции");
+			return;
+		}
+	}
+	printf("%d шт.", &ceh[d].amount);
 }
 
 int main() {
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 	setlocale(LC_ALL, "Russian");
 	int m;
-	cout << "Количество цехов: ";
-	cin >> m;
+	printf("Количество продукции: ");
+	scanf("%d", &m);
 	while (cin.fail() || m < 1) {
 		clear_m();
-		cout << "\nВведите корректное значение: ";
-		cin >> m;
+		printf("\nВведите корректное значение: ");
+		scanf("%d", &m);
 	}
 	Cex* ceh = new Cex[m];
 	cin_s(ceh, 0, m);
 	for (;;) {
-		cout << "\n\n		Выберите пункт:" <<
-			"\n		1 - просмотр полного списка"<<
-			"\n		2 - отсортировать список" <<
-			"\n		3 - дополнить список" <<
-			"\n		4 - удаление одного элемента из списка" <<
-			"\n		5 - количество выпущенных изделий определённого цеха" <<
-			"\n		6 - выход\n";
+		printf("\n\n		Выберите пункт:"
+			"\n		1 - просмотр полного списка"
+			"\n		2 - отсортировать список"
+			"\n		3 - дополнить список"
+			"\n		4 - удаление одного элемента из списка"
+			"\n		5 - количество выпущенных изделий определённой продукции"
+			"\n		6 - максимальное кол-во"
+			"\n		7 - минимальное кол-во"
+			"\n		8 - выход\n");
 		int l;
-		cin >> l;
-		while (cin.fail() || l < 1 || l>6) {
+		scanf("%d", &l);
+		while (cin.fail() || l < 1 || l>8) {
 			clear_m();
-			cout << "\nВведите корректное значение: ";
-			cin >> l;
+			printf("\nВведите корректное значение: ");
+			scanf("%d", &l);
 		}
 		switch (l)
 		{
@@ -270,7 +321,11 @@ int main() {
 		case 3: dop(ceh, m); break;
 		case 4: delete_s(ceh, m); break;
 		case 5: detail(ceh, m); break;
-		case 6: return 0; break;
+		case 6: if (!m)break; 
+			printf("%d",ceh[0].amount_max); break;
+		case 7: if (!m) break;
+			printf("%d", ceh[0].amount_min); break;
+		case 8: return 0; break;
 		}
 	}
 }
