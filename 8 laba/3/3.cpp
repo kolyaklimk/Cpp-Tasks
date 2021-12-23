@@ -20,16 +20,16 @@
 #pragma warning(disable : 4996)
 using namespace std;
 
-	void clear_m() {
-		cin.clear();
-		cin.ignore(9999, '\n');
-	}
-	void error(int a) {
-		clear_m();
-		printf("\nВведите корректное значение: ");
-		scanf("%d", &a);
+void clear_m() {
+	cin.clear();
+	cin.ignore(9999, '\n');
+}
+void error(int a) {
+	clear_m();
+	printf("\nВведите корректное значение: ");
+	scanf("%d", &a);
 
-	}
+}
 class Cex {
 private:
 	char name[100];
