@@ -245,42 +245,63 @@ void delete_s(Cex*& ceh, int& m) {
 	delete[] buf;
 	cout_s(ceh, m);
 }
-void detail(Cex*& ceh, int m) {
-	int d;
-	char da[100];
+void detail(Cex* ceh1, int m) {
+	Cex* ceh = new Cex[m];
+	for (int u = 0; u < m; u++) {
+		ceh[u] = ceh1[u];
+	}
+	int d,da;
 	bool r = 0;
 	clear_m();
-	printf("\nНаименование продукции для просмотра (0=назад): ");
-	cin.get(da, 100);
-	while (da[0] == '\0') {
+	printf("\nЦех (0=назад): ");
+	scanf("%d", &da);
+	while (cin.fail() || da <0) {
 		clear_m();
 		printf("Введите корректное значение: ");
-		cin.get(da, 100);
+		scanf("%d", &da);
 	}
-	if (da[0] == '0' && da[1] == '\0') {
-		return;
-	}
+	if (!da) return;
 	int h;
 	for (h = 0; h < m; h++) {
-		if (ceh[h].name[0] == da[0]) {
+		if (ceh[h].number == da) {
 			r = 1;
 			d = h;
 			break;
 		}
 	}
 	if (!r) {
-		printf("В списке нет такой продукции");
+		printf("В списке нет такого цеха");
 		return;
 	}
-	for (int j = 0; j < 100; j++) {
-		if (ceh[h].name[j] == '\0' && da[j] == '\0') break;
-		if (ceh[h].name[j] == da[j]) continue;
-		else {
-			printf("В списке нет такой продукции");
+		double k = 0;
+	for (;;) {
+		r = 0;
+		k += ceh[d].amount;
+		for (int u = d; u < m - 1; u++)
+			ceh[u] = ceh[u + 1];
+		Cex* buf = new Cex[--m];
+		for (int u = 0; u < m; u++) {
+			buf[u] = ceh[u];
+		}
+		delete[] ceh;
+		ceh = new Cex[m];
+		for (int u = 0; u < m; u++) {
+			ceh[u] = buf[u];
+		}
+		delete[] buf;
+		for (h = 0; h < m; h++) {
+			if (ceh[h].number == da) {
+				r = 1;
+				d = h;
+				break;
+			}
+		}
+		if (!r) {
+			delete[] ceh;
+			printf("%lf шт.", k);
 			return;
 		}
 	}
-	printf("%d шт.", &ceh[d].amount);
 }
 
 int main() {
@@ -303,7 +324,7 @@ int main() {
 			"\n		2 - отсортировать список"
 			"\n		3 - дополнить список"
 			"\n		4 - удаление одного элемента из списка"
-			"\n		5 - количество выпущенных изделий определённой продукции"
+			"\n		5 - количество выпущенных изделий определённого цеха"
 			"\n		6 - максимальное кол-во"
 			"\n		7 - минимальное кол-во"
 			"\n		8 - выход\n");
