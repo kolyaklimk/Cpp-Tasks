@@ -1,0 +1,4 @@
+﻿  9.cpp
+C:\Users\Коля\Desktop\Laba\3\9\9.cpp(18,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Коля\Desktop\Laba\3\9\9.cpp(22,33): warning C4244: '+=': conversion from 'double' to '__int64', possible loss of data
+  9.vcxproj -> C:\Users\Коля\Desktop\Laba\3\Debug\9.exe
