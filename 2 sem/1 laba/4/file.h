@@ -9,7 +9,7 @@
 
 class file
 {
-public:
+protected:
     file();
     bool read();
     void write();

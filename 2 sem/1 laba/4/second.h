@@ -9,7 +9,7 @@ namespace Ui {
 class second;
 }
 
-class second : public QMainWindow, public file
+class second : public QMainWindow, protected file
 {
     Q_OBJECT
 
