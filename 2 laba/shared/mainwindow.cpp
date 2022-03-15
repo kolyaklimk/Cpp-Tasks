@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->textBrowser->setTextColor("red");
+    ui->textBrowser_2->setTextColor("red");
+
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);  // Устанавливаем графическую сцену в graphicsView
     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
