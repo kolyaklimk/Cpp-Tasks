@@ -1,4 +1,0 @@
-﻿  dop_2.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\dop_2\dop_2.cpp(49,23): warning C4244: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\dop_2\dop_2.cpp(26,33): warning C4101: 'x': unreferenced local variable
-  dop_2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\x64\Debug\dop_2.exe

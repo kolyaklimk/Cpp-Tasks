@@ -1,6 +1,0 @@
-﻿  3.2.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\3.2\3.2.cpp(33,14): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\3.2\3.2.cpp(63,29): warning C4101: 'j1': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\3.2\3.2.cpp(63,22): warning C4101: 'y': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\3.2\3.2.cpp(63,25): warning C4101: 'i1': unreferenced local variable
-  3.2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\x64\Debug\3.2.exe
