@@ -67,6 +67,7 @@ void MainWindow::on_pushButton_clicked()
      connect(timer, SIGNAL(timeout()), this, SLOT(draw_t()));
      timer->start(1000);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 
@@ -96,6 +97,7 @@ void MainWindow::on_pushButton_2_clicked()
      connect(timer, SIGNAL(timeout()), this, SLOT(draw_t()));
      timer->start(1000);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 
 }
 
@@ -168,6 +170,7 @@ void MainWindow::on_pushButton_3_clicked()
     ptr2.reset(new circle());
     ui->textBrowser_2->insertPlainText("\nptr2.reset(new circle()) -> ptr2.operator_null(): "+ QString::number(ptr2.operator_null()));
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 void MainWindow::on_pushButton_4_clicked()
@@ -191,6 +194,7 @@ void MainWindow::on_pushButton_5_clicked()
     ui->textBrowser_2->insertPlainText("\nОбъект удалён, значит произошёл swap "
                                        "указателей и ptr2 удалился по завершению функции");
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 
 }
 
@@ -202,5 +206,6 @@ void MainWindow::on_pushButton_6_clicked()
         check_button=3;
         circle_ptr.get_deleter();
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 

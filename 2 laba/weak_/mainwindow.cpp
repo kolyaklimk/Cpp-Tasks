@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->textBrowser->setTextColor("red");
+    ui->textBrowser_2->setTextColor("red");
+
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);  // Устанавливаем графическую сцену в graphicsView
     ui->graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -65,6 +68,7 @@ void MainWindow::on_pushButton_clicked()
      connect(timer, SIGNAL(timeout()), this, SLOT(draw_t()));
      timer->start(1000);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 
@@ -152,6 +156,7 @@ void MainWindow::on_pushButton_3_clicked()
     ui->textBrowser_2->insertPlainText("\nptr2.reset(); \nОбъект удалён");
     ui->textBrowser_2->insertPlainText("\nptr3.expired(): " + QString::number(ptr3.expired()));
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 void MainWindow::on_pushButton_4_clicked()
@@ -177,10 +182,13 @@ void MainWindow::on_pushButton_5_clicked()
                                        "указателей и ptr2 удалился по завершению функции");
     }
 
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 void MainWindow::on_pushButton_6_clicked()
 {
+    if(check_button==1){
+        check_button=3;
     my_weak_ptr<circle> ptr2(circle_ptr);
     my_weak_ptr<circle> ptr3(circle_ptr);
     ui->textBrowser_2->insertPlainText("\nmy_weak_ptr<circle> ptr2(circle_ptr) \nmy_weak_ptr<circle> ptr3(circle_ptr)");
@@ -188,5 +196,7 @@ void MainWindow::on_pushButton_6_clicked()
     ui->textBrowser_2->insertPlainText("\nptr3.use_count(): " + QString::number(ptr3.use_count()));
     ptr3.reset();
     ui->textBrowser_2->insertPlainText("\nptr3.reset() -> ptr3.use_count(): " + QString::number(ptr3.use_count()));
+    }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 

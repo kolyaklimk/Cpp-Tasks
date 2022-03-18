@@ -69,6 +69,7 @@ void MainWindow::on_pushButton_clicked()
      connect(timer, SIGNAL(timeout()), this, SLOT(draw_t()));
      timer->start(1000);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 
@@ -99,6 +100,7 @@ void MainWindow::on_pushButton_2_clicked()
      connect(timer, SIGNAL(timeout()), this, SLOT(draw_t()));
      timer->start(1000);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 
@@ -173,6 +175,7 @@ void MainWindow::on_pushButton_3_clicked()
     ptr2 = new circle();
     circle_ptr.get()->setPos(1000,100);
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 }
 
 void MainWindow::on_pushButton_4_clicked()
@@ -198,6 +201,7 @@ void MainWindow::on_pushButton_5_clicked()
 
 
     }
+    else ui->textBrowser_2->setText("Ожидается reset");
 
 }
 
