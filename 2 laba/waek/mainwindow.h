@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QStandardItemModel>
-#include "my_unique_ptr.h"
+#include "my_weak_ptr.h"
 #include <QDebug>
 
 QT_BEGIN_NAMESPACE
@@ -23,17 +23,20 @@ private slots:
 
     void on_delete_2_clicked();
 
-    void on_pushButton_2_clicked();
 
-    void on_pushButton_3_clicked();
+    void on_add_2_clicked();
 
-    void on_pushButton_4_clicked();
+    void on_delete_3_clicked();
 
-    //void on_add_2_clicked();
+    //void on_reset_clicked();
 
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *model;
-    my_unique_ptr<int> uniq;
+    QList<my_weak_ptr<int>> lem;
+    QList<my_shared_ptr<int>> shared;
+    int* l;
+    QVector<char> rand;
+    void reform(int);
 };
 #endif // MAINWINDOW_H
