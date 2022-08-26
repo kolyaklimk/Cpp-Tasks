@@ -1,0 +1,3 @@
+﻿  dop_3.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\dop_3\dop_3.cpp(20,30): warning C4244: 'return': conversion from 'double' to 'unsigned __int64', possible loss of data
+  dop_3.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\5 laba\x64\Debug\dop_3.exe

@@ -1,0 +1,8 @@
+﻿  1.cpp
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\1\1.cpp(59,15): warning C4244: 'argument': conversion from 'long double' to '_Elem', possible loss of data
+          with
+          [
+              _Elem=char
+          ]
+C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\1\1.cpp(63,41): warning C4018: '<': signed/unsigned mismatch
+  1.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\7 laba\Debug\1.exe

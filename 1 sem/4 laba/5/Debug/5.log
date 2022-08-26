@@ -1,0 +1,4 @@
+﻿  5.cpp
+C:\Users\Коля\Desktop\Laba\4\5\5.cpp(49,25): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Коля\Desktop\Laba\4\5\5.cpp(70,24): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  5.vcxproj -> C:\Users\Коля\Desktop\Laba\4\Debug\5.exe
