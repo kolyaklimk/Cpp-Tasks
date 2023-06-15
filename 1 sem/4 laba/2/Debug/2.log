@@ -1,4 +1,0 @@
-﻿  2.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\2\2.cpp(67,49): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\2\2.cpp(70,42): warning C4244: '-=': conversion from 'double' to 'int', possible loss of data
-  2.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\Debug\2.exe

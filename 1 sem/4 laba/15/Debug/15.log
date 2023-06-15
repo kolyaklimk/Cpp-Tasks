@@ -1,7 +1,0 @@
-﻿  15.cpp
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\15\15.cpp(29,17): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\15\15.cpp(19,33): warning C4101: 'q_': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\15\15.cpp(19,9): warning C4101: 't1': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\15\15.cpp(19,46): warning C4101: 'q1_': unreferenced local variable
-C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\15\15.cpp(19,13): warning C4101: 't': unreferenced local variable
-  15.vcxproj -> C:\Users\Коля\Desktop\Laba\GitHub\Labs_153504_Klimkovich\4 laba\Debug\15.exe
