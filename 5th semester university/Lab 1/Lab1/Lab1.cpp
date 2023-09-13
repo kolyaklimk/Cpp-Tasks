@@ -18,7 +18,7 @@ HWND hwndListView; // Дескриптор элемента управления ListView
 std::vector<Shape> shapes;
 RECT currentShape; // Текущая фигура (рисуется во временном буфере)
 bool isDrawing = false;
-int selectedShape = 0; // 0 - нет выбора, 1 - круг, 2 - прямоугольник
+int selectedShape = 1; // 0 - нет выбора, 1 - круг, 2 - прямоугольник
 
 // Прототип функции обработки сообщений окна
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -43,16 +43,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Создание элемента управления ListView
 	hwndListView = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
 		WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL,
-		10, 50, 400, 300, hwndMain, NULL, hInst, NULL);
+		10, 50, 255, 200, hwndMain, NULL, hInst, NULL);
 
 	// Настройка столбцов в ListView
 	LVCOLUMN lvColumn = { 0 };
 	lvColumn.mask = LVCF_TEXT | LVCF_WIDTH;
-	lvColumn.cx = 150;
+	lvColumn.cx = 100;
 	lvColumn.pszText = _wcsdup(L"Круг");
 	ListView_InsertColumn(hwndListView, 0, &lvColumn);
 
-	lvColumn.cx = 100;
+	lvColumn.cx = 150;
 	lvColumn.pszText = _wcsdup(L"Координаты");
 	ListView_InsertColumn(hwndListView, 1, &lvColumn);
 
@@ -88,6 +88,48 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_CREATE:
+		break;
+
+	case WM_NOTIFY:
+	{
+		// Обработка уведомления от элемента управления ListView
+		NMHDR* pnm = (NMHDR*)lParam;
+		if (pnm->code == NM_CLICK) // Проверка, что произошел клик на элементе
+		{
+			NMLISTVIEW* pNMLV = (NMLISTVIEW*)lParam;
+			int selectedItemIndex = pNMLV->iItem; // Индекс выбранного элемента
+
+			HWND hwndDialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hwndMain, DialogProc);
+			ShowWindow(hwndDialog, SW_SHOW);
+		}
+		break;
+	}
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_BUTTON_OK:
+			// Получение значений из полей ввода
+			TCHAR x1Text[256], x2Text[256], y1Text[256], y2Text[256];
+			GetDlgItemText(hwndDialog, IDC_EDIT_X1, x1Text, 256);
+			GetDlgItemText(hwndDialog, IDC_EDIT_X2, x2Text, 256);
+			GetDlgItemText(hwndDialog, IDC_EDIT_Y1, y1Text, 256);
+			GetDlgItemText(hwndDialog, IDC_EDIT_Y2, y2Text, 256);
+
+			// Преобразование текста в числа (используйте функции типа atoi или _wtoi)
+			int x1 = _wtoi(x1Text);
+			int x2 = _wtoi(x2Text);
+			int y1 = _wtoi(y1Text);
+			int y2 = _wtoi(y2Text);
+
+			// Добавление нового элемента в ваш элемент управления ListView
+			// Используйте данные x1, x2, y1, y2 для создания элемента в ListView
+			// ...
+
+			// Закрытие диалогового окна после нажатия "ОК"
+			EndDialog(hwndDialog, 0);
+			return TRUE;
+		}
 		break;
 
 	case WM_PAINT:
@@ -155,7 +197,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		lvItem.mask = LVIF_TEXT;
 		lvItem.iItem = ListView_GetItemCount(hwndListView); // Получаем индекс новой строки
 		lvItem.iSubItem = 0;
-		lvItem.pszText = (selectedShape == 1) ? _wcsdup(L"Круг") : (selectedShape == 2) ? _wcsdup(L"Прямоугольник") : _wcsdup(L"Не выбрано");
+		lvItem.pszText = (selectedShape == 1) ? _wcsdup(L"Круг") : _wcsdup(L"Прямоугольник");
 		ListView_InsertItem(hwndListView, &lvItem);
 
 		lvItem.iSubItem = 1;
