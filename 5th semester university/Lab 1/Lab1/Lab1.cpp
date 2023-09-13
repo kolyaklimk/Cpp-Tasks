@@ -15,6 +15,13 @@ HDC hdcBuffer;
 HBITMAP hBitmap;
 HWND hwndListView; // Дескриптор элемента управления ListView
 
+HWND hwndInput1;
+HWND hwndInput2;
+HWND hwndInput3;
+HWND hwndInput4;
+HWND hwndButtonOK;
+
+int selectedItemIndex = -1;
 std::vector<Shape> shapes;
 RECT currentShape; // Текущая фигура (рисуется во временном буфере)
 bool isDrawing = false;
@@ -97,10 +104,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (pnm->code == NM_CLICK) // Проверка, что произошел клик на элементе
 		{
 			NMLISTVIEW* pNMLV = (NMLISTVIEW*)lParam;
-			int selectedItemIndex = pNMLV->iItem; // Индекс выбранного элемента
+			selectedItemIndex = pNMLV->iItem; // Индекс выбранного элемента
 
-			HWND hwndDialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hwndMain, DialogProc);
-			ShowWindow(hwndDialog, SW_SHOW);
+			HWND hwndInput1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
+				100, 10, 100, 25, hwndMain, NULL, hInst, NULL);
+			HWND hwndInput2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
+				100, 40, 100, 25, hwndMain, NULL, hInst, NULL);
+			HWND hwndInput3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
+				100, 70, 100, 25, hwndMain, NULL, hInst, NULL);
+			HWND hwndInput4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
+				100, 100, 100, 25, hwndMain, NULL, hInst, NULL);
+			HWND hwndButtonOK = CreateWindowEx(0, L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+				100, 130, 100, 25, hwndMain, NULL, hInst, NULL);
 		}
 		break;
 	}
@@ -108,29 +123,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case IDC_BUTTON_OK:
-			// Получение значений из полей ввода
-			TCHAR x1Text[256], x2Text[256], y1Text[256], y2Text[256];
-			GetDlgItemText(hwndDialog, IDC_EDIT_X1, x1Text, 256);
-			GetDlgItemText(hwndDialog, IDC_EDIT_X2, x2Text, 256);
-			GetDlgItemText(hwndDialog, IDC_EDIT_Y1, y1Text, 256);
-			GetDlgItemText(hwndDialog, IDC_EDIT_Y2, y2Text, 256);
+		case IDM_REMOVE_CONTROLS:
+		{
+			// Удаление четырех полей ввода и кнопки "OK"
+			DestroyWindow(hwndInput1);
+			DestroyWindow(hwndInput2);
+			DestroyWindow(hwndInput3);
+			DestroyWindow(hwndInput4);
+			DestroyWindow(hwndButtonOK);
 
-			// Преобразование текста в числа (используйте функции типа atoi или _wtoi)
-			int x1 = _wtoi(x1Text);
-			int x2 = _wtoi(x2Text);
-			int y1 = _wtoi(y1Text);
-			int y2 = _wtoi(y2Text);
-
-			// Добавление нового элемента в ваш элемент управления ListView
-			// Используйте данные x1, x2, y1, y2 для создания элемента в ListView
-			// ...
-
-			// Закрытие диалогового окна после нажатия "ОК"
-			EndDialog(hwndDialog, 0);
-			return TRUE;
+			break;
 		}
-		break;
 
 	case WM_PAINT:
 	{
