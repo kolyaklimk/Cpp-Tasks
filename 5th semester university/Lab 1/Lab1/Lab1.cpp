@@ -1,11 +1,26 @@
 #include <windows.h>
 #include <vector>
 #include <CommCtrl.h> // Для работы с элементами управления из библиотеки Common Controls
-
+#define M_PI 3.141592653589793238462643383279
 struct Shape
 {
 	RECT rect;
-	int selectedShape; // 0 - нет выбора, 1 - круг, 2 - прямоугольник
+	bool isCorrect;
+	int n;
+	int selectedShape;
+	// 0 - круг
+	// 1 - n-угольник
+	// 2 - Прямая
+};
+
+struct PaintWindow
+{
+	int x1 = 130;
+	int y1 = 0;
+	int x2 = 1000;
+	int y2 = 800;
+	int Width = x2 - x1;
+	int Height = y2 - y1;
 };
 
 // Глобальные переменные
@@ -13,7 +28,8 @@ HINSTANCE hInst;
 HWND hwndMain;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndListView; // Дескриптор элемента управления ListView
+HWND hwndListView;
+HWND hwndComboBox;
 
 HWND hwndInput1;
 HWND hwndInput2;
@@ -21,60 +37,35 @@ HWND hwndInput3;
 HWND hwndInput4;
 HWND hwndButtonOK;
 
+PaintWindow PW;
 int selectedItemIndex = -1;
 std::vector<Shape> shapes;
 RECT currentShape; // Текущая фигура (рисуется во временном буфере)
 bool isDrawing = false;
-int selectedShape = 1; // 0 - нет выбора, 1 - круг, 2 - прямоугольник
+int selectedShape = 0;
+int n = 4;
 
-// Прототип функции обработки сообщений окна
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-// Прототип функции создания кнопки
 HWND CreateButton(HWND hwndParent, int x, int y, int width, int height, LPCTSTR text, int id);
+void DrawShape(HDC hdc);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	// Регистрация класса окна
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
 
-	// Создание главного окна
-	hwndMain = CreateWindow(L"MyWindowClass", L"Графический редактор", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
+	hwndMain = CreateWindow(L"MyWindowClass", L"Графический редактор", WS_OVERLAPPEDWINDOW, NULL, NULL, PW.x2, PW.y2, NULL, NULL, hInstance, NULL);
 	SetWindowLong(hwndMain, GWL_STYLE, GetWindowLong(hwndMain, GWL_STYLE) & ~WS_THICKFRAME);
 
-	// Создание кнопок
-	CreateButton(hwndMain, 10, 10, 80, 30, L"Круг", 1);
-	CreateButton(hwndMain, 100, 10, 120, 30, L"Прямоугольник", 2);
-
-	// Создание элемента управления ListView
-	hwndListView = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
-		WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL,
-		10, 50, 255, 200, hwndMain, NULL, hInst, NULL);
-
-	// Настройка столбцов в ListView
-	LVCOLUMN lvColumn = { 0 };
-	lvColumn.mask = LVCF_TEXT | LVCF_WIDTH;
-	lvColumn.cx = 100;
-	lvColumn.pszText = _wcsdup(L"Круг");
-	ListView_InsertColumn(hwndListView, 0, &lvColumn);
-
-	lvColumn.cx = 150;
-	lvColumn.pszText = _wcsdup(L"Координаты");
-	ListView_InsertColumn(hwndListView, 1, &lvColumn);
-
-	// Создание временного буфера для двойной буферизации
-	HDC hdc = GetDC(hwndMain); // Получаем контекст устройства для текущего окна
-	hdcBuffer = CreateCompatibleDC(hdc); // Создаем временный контекст устройства
-	hBitmap = CreateCompatibleBitmap(hdc, 800, 600);
+	HDC hdc = GetDC(hwndMain);
+	hdcBuffer = CreateCompatibleDC(hdc);
+	hBitmap = CreateCompatibleBitmap(hdc, PW.Width, PW.Height);
 	SelectObject(hdcBuffer, hBitmap);
-	ReleaseDC(hwndMain, hdc); // Освобождение контекста устройства для текущего окна
+	ReleaseDC(hwndMain, hdc);
 
-	// Отображение окна
 	ShowWindow(hwndMain, nCmdShow);
 	UpdateWindow(hwndMain);
 
-	// Основной цикл сообщений
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -82,10 +73,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DispatchMessage(&msg);
 	}
 
-	// Освобождение ресурсов перед выходом
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
-
 
 	return msg.wParam;
 }
@@ -94,71 +83,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
-	case WM_CREATE:
-		break;
+	case WM_CREATE: {
+#pragma region Elements
+		hwndComboBox = CreateWindow(
+			L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST,
+			0, 40, 260, 200, hwnd, NULL, NULL, NULL
+		);
 
-	case WM_NOTIFY:
-	{
-		// Обработка уведомления от элемента управления ListView
-		NMHDR* pnm = (NMHDR*)lParam;
-		if (pnm->code == NM_CLICK) // Проверка, что произошел клик на элементе
-		{
-			NMLISTVIEW* pNMLV = (NMLISTVIEW*)lParam;
-			selectedItemIndex = pNMLV->iItem; // Индекс выбранного элемента
+		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Круг (A)");
+		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"N-угольник (B)");
+		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Прямая (C)");
 
-			HWND hwndInput1 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
-				100, 10, 100, 25, hwndMain, NULL, hInst, NULL);
-			HWND hwndInput2 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
-				100, 40, 100, 25, hwndMain, NULL, hInst, NULL);
-			HWND hwndInput3 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
-				100, 70, 100, 25, hwndMain, NULL, hInst, NULL);
-			HWND hwndInput4 = CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_BORDER,
-				100, 100, 100, 25, hwndMain, NULL, hInst, NULL);
-			HWND hwndButtonOK = CreateWindowEx(0, L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-				100, 130, 100, 25, hwndMain, NULL, hInst, NULL);
-		}
+		SendMessage(hwndComboBox, CB_SETCURSEL, 0, 0);
+#pragma endregion		
 		break;
 	}
 
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDM_REMOVE_CONTROLS:
-		{
-			// Удаление четырех полей ввода и кнопки "OK"
-			DestroyWindow(hwndInput1);
-			DestroyWindow(hwndInput2);
-			DestroyWindow(hwndInput3);
-			DestroyWindow(hwndInput4);
-			DestroyWindow(hwndButtonOK);
-
-			break;
-		}
-
 	case WM_PAINT:
 	{
-		// Рисование текущей фигуры на временном буфере
 		if (isDrawing)
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-
-			//Копирование временного буфера на экран
-			BitBlt(hdc, 0, 0, 800, 600, hdcBuffer, 0, 0, SRCCOPY);
-
-			//HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 255)); // Синий цвет для рисования
-			//SelectObject(hdcBuffer, hBrush);
-
-			if (selectedShape == 1) // Рисовать круг
-			{
-				Ellipse(hdc, currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
-			}
-			else if (selectedShape == 2) // Рисовать прямоугольник
-			{
-				Rectangle(hdc, currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
-			}
-
-			//DeleteObject(hBrush);
+			BitBlt(hdc, PW.x1, PW.y1, PW.Width, PW.Height, hdcBuffer, 0, 0, SRCCOPY);
+			DrawShape(hdc);
 			EndPaint(hwnd, &ps);
 		}
 		break;
@@ -174,7 +122,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
-		BitBlt(hdcBuffer, 0, 0, 800, 600, hdc, 0, 0, SRCCOPY);
+		BitBlt(hdcBuffer, 0, 0, PW.Width, PW.Height, hdc, PW.x1, PW.y1, SRCCOPY);
 		EndPaint(hwnd, &ps);
 		break;
 	}
@@ -195,39 +143,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		isDrawing = false;
 
-		// Добавляем информацию о фигуре в ListView
-		LVITEM lvItem = { 0 };
-		lvItem.mask = LVIF_TEXT;
-		lvItem.iItem = ListView_GetItemCount(hwndListView); // Получаем индекс новой строки
-		lvItem.iSubItem = 0;
-		lvItem.pszText = (selectedShape == 1) ? _wcsdup(L"Круг") : _wcsdup(L"Прямоугольник");
-		ListView_InsertItem(hwndListView, &lvItem);
-
-		lvItem.iSubItem = 1;
-		WCHAR coords[64];
-		swprintf_s(coords, 64, L"(%d, %d, %d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
-		lvItem.pszText = coords;
-		ListView_SetItem(hwndListView, &lvItem);
-
-		shapes.push_back({ currentShape,selectedShape });
+		if (GetKeyState(VK_SHIFT) & 0x8000) {
+			shapes.push_back({ currentShape, true,n,selectedShape });
+		}
+		else {
+			shapes.push_back({ currentShape, false,n,selectedShape });
+		}
 		currentShape = { 0, 0, 0, 0 };
 
 		InvalidateRect(hwndListView, NULL, TRUE);
 		break;
 	}
 
+	case WM_CHAR:
+		selectedShape = tolower((unsigned char)wParam) - L'a';
+		SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
+		break;
+
 	case WM_COMMAND:
-		if (LOWORD(wParam) == 1)
-		{
-			selectedShape = 1;
-		}
-		else if (LOWORD(wParam) == 2)
-		{
-			selectedShape = 2;
-		}
-		else
-		{
-			selectedShape = 0;
+		if (LOWORD(wParam) == 0 && HIWORD(wParam) == CBN_SELCHANGE) {
+			int selectedIndex = SendMessage(hwndComboBox, CB_GETCURSEL, 0, 0);
+			if (selectedIndex != CB_ERR) {
+				selectedShape = selectedIndex;
+			}
+			SetFocus(hwnd);
 		}
 		break;
 
@@ -245,4 +184,98 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 HWND CreateButton(HWND hwndParent, int x, int y, int width, int height, LPCTSTR text, int id)
 {
 	return CreateWindow(L"BUTTON", text, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, x, y, width, height, hwndParent, (HMENU)id, hInst, NULL);
+}
+
+void DrawShape(HDC hdc)
+{
+	long* x1 = &currentShape.left;
+	long* y1 = &currentShape.top;
+	long* x2 = &currentShape.right;
+	long* y2 = &currentShape.bottom;
+
+	switch (selectedShape) {
+		// Круг
+	case 0:
+		if (GetKeyState(VK_SHIFT) & 0x8000) {
+			int centerX = (*x1 + *x2) / 2;
+			int centerY = (*y1 + *y2) / 2;
+			int radius = (*x2 - *x1) / 2;
+			Ellipse(hdc, centerX - radius, centerY - radius, centerX + radius, centerY + radius);
+		}
+		else {
+			Ellipse(hdc, *x1, *y1, *x2, *y2);
+		}
+		break;
+
+		// N-угольник
+	case 1:
+		if (GetKeyState(VK_SHIFT) & 0x8000)
+		{
+			double angle = 2 * M_PI / n;
+			int radius, x;
+			int y = *y1;
+			std::vector<POINT> vertices;
+
+			if (*x2 >= *x1)
+			{
+				if (*y2 >= *y1)
+				{
+					radius = (*x2 - *x1) / 2;
+				}
+				else
+				{
+					radius = (*x1 - *x2) / 2;
+				}
+				x = *x1 + (*x2 - *x1) / 2 - radius * tan(M_PI / n);
+			}
+			else
+			{
+				if (*y2 >= *y1)
+				{
+					radius = (*x1 - *x2) / 2;
+				}
+				else
+				{
+					radius = (*x2 - *x1) / 2;
+				}
+				x = *x1 - abs(*x2 - *x1) / 2 - radius * tan(M_PI / n);
+			}
+
+			for (int i = 0; i < n; i++) {
+				vertices.push_back({ x,y });
+				x += static_cast<int>(radius * 2 * cos(angle * i));
+				y += static_cast<int>(radius * 2 * sin(angle * i));
+			}
+
+			Polygon(hdc, vertices.data(), n);
+		}
+		else
+		{
+			int width = *x2 - *x1;
+			int height = *y2 - *y1;
+			int centerX = (*x1 + *x2) / 2;
+			int centerY = (*y1 + *y2) / 2;
+			double angle = 2 * M_PI / n;
+			std::vector<POINT> vertices;
+
+			for (int i = 0; i < n; i++)
+			{
+				int x = static_cast<int>(centerX + width / 2 * cos(i * angle + M_PI / 4));
+				int y = static_cast<int>(centerY + height / 2 * sin(i * angle + M_PI / 4));
+				vertices.push_back({ x, y });
+			}
+
+			if (!vertices.empty())
+			{
+				Polygon(hdc, vertices.data(), static_cast<int>(vertices.size()));
+			}
+		}
+		break;
+
+		// Прямая
+	case 2:
+		MoveToEx(hdc, *x1, *y1, NULL);
+		LineTo(hdc, *x2, *y2);
+		break;
+	}
 }
