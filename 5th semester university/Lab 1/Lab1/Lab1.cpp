@@ -2,8 +2,10 @@
 #include <vector>
 #include <CommCtrl.h> // ƒл€ работы с элементами управлени€ из библиотеки Common Controls
 #include <commdlg.h>
+#include <string>
 
 #define M_PI 3.141592653589793238462643383279
+
 struct Shape
 {
 	RECT rect;
@@ -20,7 +22,7 @@ struct Shape
 
 struct PaintWindow
 {
-	int x1 = 130;
+	int x1 = 150;
 	int y1 = 0;
 	int x2 = 1000;
 	int y2 = 800;
@@ -32,7 +34,7 @@ struct PaintWindow
 HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndMain, hwndListView, hwndComboBox, hSlider, hSliderThickness;
+HWND hwndMain, hwndListView, hwndComboBox, hSlider, hSliderThickness, hwndList, hwndDeleteItem, hwndUpItem, hwndDownItem;
 COLORREF customColorsThickness[16]{ 0 };
 COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
@@ -50,7 +52,7 @@ int Thickness = 1;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void DrawShape(HDC hdc, bool isCorrect);
 void FillRectWindow();
-void CtrlZ();
+void RePaint(bool ctrlZ);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -92,7 +94,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 #pragma region Elements
-		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST, 0, 00, 130, 200, hwnd, NULL, NULL, NULL);
+		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST, 0, 00, PW.x1, 200, hwnd, NULL, NULL, NULL);
 
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L" руг (A)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"N-угольник (B)");
@@ -102,19 +104,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma endregion		
 
 #pragma region SliderN
-		hSlider = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 40, 130, 40, hwnd, NULL, hInst, NULL);
+		hSlider = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 40, PW.x1, 40, hwnd, NULL, hInst, NULL);
 		SendMessage(hSlider, TBM_SETRANGE, TRUE, MAKELPARAM(3, 20));
 		SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
 		EnableWindow(hSlider, FALSE);
 #pragma endregion
 
 #pragma region Slider Thickness
-		hSliderThickness = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 80, 130, 40, hwnd, NULL, hInst, NULL);
+		hSliderThickness = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 80, PW.x1, 40, hwnd, NULL, hInst, NULL);
 		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(1, 100));
 #pragma endregion
 
 #pragma region Color Choose Thickness
-		HWND hButton1 = CreateWindow(L"BUTTON", L"÷вет линии", WS_CHILD | WS_VISIBLE, 0, 120, 130, 40, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+		HWND hButton1 = CreateWindow(L"BUTTON", L"÷вет линии", WS_CHILD | WS_VISIBLE, 0, 120, PW.x1, 40, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
 		ZeroMemory(&ccThickness, sizeof(ccThickness));
 		ccThickness.lStructSize = sizeof(ccThickness);
 		ccThickness.hwndOwner = hwndMain; // ќкно-владелец диалога
@@ -124,13 +126,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 
 #pragma region Color Choose Brush
-		HWND hButton2 = CreateWindow(L"BUTTON", L"÷вет заливки", WS_CHILD | WS_VISIBLE, 0, 160, 130, 40, hwnd, (HMENU)1002, GetModuleHandle(NULL), NULL);
+		HWND hButton2 = CreateWindow(L"BUTTON", L"÷вет заливки", WS_CHILD | WS_VISIBLE, 0, 160, PW.x1, 40, hwnd, (HMENU)1002, GetModuleHandle(NULL), NULL);
 		ZeroMemory(&ccBrush, sizeof(ccBrush));
 		ccBrush.lStructSize = sizeof(ccBrush);
 		ccBrush.hwndOwner = hwndMain;
 		ccBrush.lpCustColors = (LPDWORD)customColorsThickness;
 		ccBrush.rgbResult = RGB(255, 0, 0);
 		ccBrush.Flags = CC_FULLOPEN | CC_RGBINIT;
+#pragma endregion
+
+#pragma region Color Choose Brush
+		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY, 0, 220, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
+		hwndDeleteItem = CreateWindow(L"BUTTON", L"”далить", WS_CHILD | WS_VISIBLE, 0, 540, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
+		hwndUpItem = CreateWindow(L"BUTTON", L"¬верх", WS_CHILD | WS_VISIBLE, 0, 580, PW.x1, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
+		hwndDownItem = CreateWindow(L"BUTTON", L"¬низ", WS_CHILD | WS_VISIBLE, 0, 620, PW.x1, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
+		ShowWindow(hwndDeleteItem, SW_HIDE);
+		ShowWindow(hwndUpItem, SW_HIDE);
+		ShowWindow(hwndDownItem, SW_HIDE);
 #pragma endregion
 		break;
 	}
@@ -194,16 +206,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONUP:
 	{
-		isDrawing = false;
+		if (isDrawing) {
+			isDrawing = false;
 
-		if (GetKeyState(VK_SHIFT) & 0x8000) {
-			shapes.push_back({ currentShape, true,n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush });
-		}
-		else {
-			shapes.push_back({ currentShape, false,n,selectedShape,Thickness,selectedColorThickness,selectedColorBrush });
-		}
+			if (GetKeyState(VK_SHIFT) & 0x8000) {
+				shapes.push_back({ currentShape, true,n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush });
+			}
+			else {
+				shapes.push_back({ currentShape, false,n,selectedShape,Thickness,selectedColorThickness,selectedColorBrush });
+			}
 
-		currentShape = { 0, 0, 0, 0 };
+			wchar_t buffer[30];
+			swprintf(buffer, 30, L"(%d, %d), (%d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
+			SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)buffer);
+
+			currentShape = { 0, 0, 0, 0 };
+		}
 		break;
 	}
 
@@ -211,7 +229,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		int lower = tolower((unsigned char)wParam);
 		if (wParam == 'Z' && GetKeyState(VK_CONTROL) < 0) {
-			CtrlZ();
+			RePaint(true);
 			SetFocus(hwnd);
 		}
 		else if (GetKeyState(VK_SHIFT) < 0)
@@ -226,16 +244,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			case L'c':
 				selectedShape = lower - L'a';
 				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
-				SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
-				EnableWindow(hSlider, FALSE);
+				ShowWindow(hSlider, SW_HIDE);
 				FillRectWindow();
 				break;
 
 			case L'b':
 				selectedShape = lower - L'a';
 				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
-				SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
-				EnableWindow(hSlider, TRUE);
+				ShowWindow(hSlider, SW_SHOW);
 				break;
 			}
 		}
@@ -249,13 +265,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (selectedIndex != CB_ERR) {
 				if (selectedIndex == 1)
 				{
-					SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
-					EnableWindow(hSlider, TRUE);
+					ShowWindow(hSlider, SW_SHOW);
 				}
 				else
 				{
-					SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
-					EnableWindow(hSlider, FALSE);
+					ShowWindow(hSlider, SW_HIDE);
 					FillRectWindow();
 				}
 				selectedShape = selectedIndex;
@@ -276,7 +290,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				selectedColorBrush = ccBrush.rgbResult;
 			}
 		}
-
+		if (LOWORD(wParam) == 100) {
+			int ewq = HIWORD(wParam);
+			if (ewq == LBN_SELCHANGE) {
+				ShowWindow(hwndDeleteItem, SW_SHOW);
+				ShowWindow(hwndUpItem, SW_SHOW);
+				ShowWindow(hwndDownItem, SW_SHOW);
+			}
+			else {
+				/*SendMessage(hwndList, LB_SETCURSEL, (WPARAM)-1, 0);
+				ShowWindow(hwndDeleteItem, SW_HIDE);
+				ShowWindow(hwndUpItem, SW_HIDE);
+				ShowWindow(hwndDownItem, SW_HIDE);
+				FillRectWindow();*/
+			}
+		}
+		if (LOWORD(wParam) == 101)
+		{
+			RePaint(false);
+		}
 		break;
 	}
 
@@ -302,15 +334,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void FillRectWindow() {
 	HDC hdchwndMain = GetDC(hwndMain);
-	RECT rect1{ 0,40,130,80 };
+	RECT rect1{ 0,40,PW.x1,80 };
+	RECT rect2{ 0,540,PW.x1,PW.y2 };
 	FillRect(hdchwndMain, &rect1, (HBRUSH)(COLOR_WINDOW));
+	FillRect(hdchwndMain, &rect2, (HBRUSH)(COLOR_WINDOW));
 	ReleaseDC(hwndMain, hdchwndMain);
 }
 
-void CtrlZ()
+void RePaint(bool ctrlZ)
 {
 	if (shapes.size() > 0) {
-		shapes.pop_back();
+		int indexItem;
+		if (ctrlZ)
+		{
+			shapes.pop_back();
+			indexItem = shapes.size();
+		}
+		else
+		{
+			indexItem = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			shapes.erase(shapes.begin() + indexItem);
+		}
+		SendMessage(hwndList, LB_DELETESTRING, indexItem, 0);
 
 		COLORREF bufSelectedColorThickness = selectedColorThickness;
 		COLORREF bufSelectedColorBrush = selectedColorBrush;
@@ -346,6 +391,7 @@ void CtrlZ()
 		Thickness = bufThickness;
 	}
 }
+
 
 void DrawShape(HDC hdc, bool isCorrect)
 {
