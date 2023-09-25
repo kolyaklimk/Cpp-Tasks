@@ -13,6 +13,9 @@ struct Shape
 	// 0 - круг
 	// 1 - n-угольник
 	// 2 - Прямая
+	int Thickness;
+	COLORREF selectedColorThickness;
+	COLORREF selectedColorBrush;
 };
 
 struct PaintWindow
@@ -45,8 +48,9 @@ int n = 3;
 int Thickness = 1;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-void DrawShape(HDC hdc);
+void DrawShape(HDC hdc, bool isCorrect);
 void FillRectWindow();
+void CtrlZ();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -85,13 +89,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
-	case WM_CREATE: {
-
+	case WM_CREATE:
+	{
 #pragma region Elements
-		hwndComboBox = CreateWindow(
-			L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST,
-			0, 00, 130, 200, hwnd, NULL, NULL, NULL
-		);
+		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST, 0, 00, 130, 200, hwnd, NULL, NULL, NULL);
 
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Круг (A)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"N-угольник (B)");
@@ -145,7 +146,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SelectObject(hdc, hPen);
 			SelectObject(hdc, hBrush);
 			BitBlt(hdc, PW.x1, PW.y1, PW.Width, PW.Height, hdcBuffer, 0, 0, SRCCOPY);
-			DrawShape(hdc);
+			if (GetKeyState(VK_SHIFT) & 0x8000)
+			{
+				DrawShape(hdc, true);
+			}
+			else
+			{
+				DrawShape(hdc, false);
+			}
 			DeleteObject(hPen);
 			DeleteObject(hBrush);
 			EndPaint(hwnd, &ps);
@@ -189,30 +197,47 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		isDrawing = false;
 
 		if (GetKeyState(VK_SHIFT) & 0x8000) {
-			shapes.push_back({ currentShape, true,n,selectedShape });
+			shapes.push_back({ currentShape, true,n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush });
 		}
 		else {
-			shapes.push_back({ currentShape, false,n,selectedShape });
+			shapes.push_back({ currentShape, false,n,selectedShape,Thickness,selectedColorThickness,selectedColorBrush });
 		}
+
 		currentShape = { 0, 0, 0, 0 };
 		break;
 	}
 
-	case WM_CHAR:
+	case WM_KEYDOWN:
 	{
-		selectedShape = tolower((unsigned char)wParam) - L'a';
-		SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
-		if (selectedShape == 1)
+		int lower = tolower((unsigned char)wParam);
+		if (wParam == 'Z' && GetKeyState(VK_CONTROL) < 0) {
+			CtrlZ();
+			SetFocus(hwnd);
+		}
+		else if (GetKeyState(VK_SHIFT) < 0)
 		{
-			SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
-			EnableWindow(hSlider, TRUE);
-			UpdateWindow(hSlider);
+
 		}
 		else
 		{
-			SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
-			EnableWindow(hSlider, FALSE);
-			FillRectWindow();
+			switch (lower)
+			{
+			case L'a':
+			case L'c':
+				selectedShape = lower - L'a';
+				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
+				SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
+				EnableWindow(hSlider, FALSE);
+				FillRectWindow();
+				break;
+
+			case L'b':
+				selectedShape = lower - L'a';
+				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
+				SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
+				EnableWindow(hSlider, TRUE);
+				break;
+			}
 		}
 		break;
 	}
@@ -226,7 +251,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
 					EnableWindow(hSlider, TRUE);
-					UpdateWindow(hSlider);
 				}
 				else
 				{
@@ -252,10 +276,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				selectedColorBrush = ccBrush.rgbResult;
 			}
 		}
+
 		break;
 	}
 
 	case WM_HSCROLL:
+	{
 		if (lParam == (LPARAM)hSlider)
 			n = SendMessage(hSlider, TBM_GETPOS, 0, 0);
 
@@ -264,16 +290,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		SetFocus(hwnd);
 		break;
+	}
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
-
-	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 
-	return 0;
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void FillRectWindow() {
@@ -283,7 +307,47 @@ void FillRectWindow() {
 	ReleaseDC(hwndMain, hdchwndMain);
 }
 
-void DrawShape(HDC hdc)
+void CtrlZ()
+{
+	if (shapes.size() > 0) {
+		shapes.pop_back();
+
+		COLORREF bufSelectedColorThickness = selectedColorThickness;
+		COLORREF bufSelectedColorBrush = selectedColorBrush;
+		RECT bufCurrentShape = currentShape;
+		int bufSelectedShape = selectedShape;
+		int bufn = n;
+		int bufThickness = Thickness;
+
+		HDC hdc = GetDC(hwndMain);
+		RECT rect1{ PW.x1, PW.y1, PW.x2, PW.y2, };
+		FillRect(hdc, &rect1, (HBRUSH)(COLOR_WINDOW + 1));
+
+		for (int a = 0; a < shapes.size();a++) {
+			HPEN hPen = CreatePen(PS_SOLID, shapes[a].Thickness, shapes[a].selectedColorThickness);
+			HBRUSH hBrush = CreateSolidBrush(shapes[a].selectedColorBrush);
+			SelectObject(hdc, hPen);
+			SelectObject(hdc, hBrush);
+			n = shapes[a].n;
+			selectedShape = shapes[a].selectedShape;
+			currentShape = shapes[a].rect;
+			DrawShape(hdc, shapes[a].isCorrect);
+			DeleteObject(hPen);
+			DeleteObject(hBrush);
+		}
+
+		ReleaseDC(hwndMain, hdc);
+
+		selectedColorThickness = bufSelectedColorThickness;
+		selectedColorBrush = bufSelectedColorBrush;
+		currentShape = bufCurrentShape;
+		selectedShape = bufSelectedShape;
+		n = bufn;
+		Thickness = bufThickness;
+	}
+}
+
+void DrawShape(HDC hdc, bool isCorrect)
 {
 	long* x1 = &currentShape.left;
 	long* y1 = &currentShape.top;
@@ -293,7 +357,7 @@ void DrawShape(HDC hdc)
 	switch (selectedShape) {
 		// Круг
 	case 0:
-		if (GetKeyState(VK_SHIFT) & 0x8000) {
+		if (isCorrect) {
 			int centerX = (*x1 + *x2) / 2;
 			int centerY = (*y1 + *y2) / 2;
 			int radius = (*x2 - *x1) / 2;
@@ -306,7 +370,7 @@ void DrawShape(HDC hdc)
 
 		// N-угольник
 	case 1:
-		if (GetKeyState(VK_SHIFT) & 0x8000)
+		if (isCorrect)
 		{
 			double angle = 2 * M_PI / n;
 			int radius, x;
