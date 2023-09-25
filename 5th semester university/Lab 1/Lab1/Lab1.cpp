@@ -30,9 +30,10 @@ HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
 HWND hwndMain, hwndListView, hwndComboBox, hSlider, hSliderThickness;
-COLORREF customColors[16]{ 0 }; // Массив для хранения пользовательских цветов
-CHOOSECOLOR cc; // Структура для диалога выбора цвета
-COLORREF selectedColor;
+COLORREF customColorsThickness[16]{ 0 };
+COLORREF customColorsBrush[16]{ 0 };
+CHOOSECOLOR ccThickness, ccBrush;
+COLORREF selectedColorThickness, selectedColorBrush;
 
 PaintWindow PW;
 int selectedItemIndex = -1;
@@ -108,17 +109,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 #pragma region Slider Thickness
 		hSliderThickness = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 80, 130, 40, hwnd, NULL, hInst, NULL);
-		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(1, 40));
+		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(1, 100));
 #pragma endregion
 
-#pragma region Color Choose
-		HWND hButton = CreateWindow(L"BUTTON", L"Цвет линии", WS_CHILD | WS_VISIBLE, 0, 120, 130, 40, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
-		ZeroMemory(&cc, sizeof(cc));
-		cc.lStructSize = sizeof(cc);
-		cc.hwndOwner = hwndMain; // Окно-владелец диалога
-		cc.lpCustColors = (LPDWORD)customColors;
-		cc.rgbResult = RGB(255, 0, 0);
-		cc.Flags = CC_FULLOPEN | CC_RGBINIT; // Флаги диалога (полный выбор цвета и начальное значение)
+#pragma region Color Choose Thickness
+		HWND hButton1 = CreateWindow(L"BUTTON", L"Цвет линии", WS_CHILD | WS_VISIBLE, 0, 120, 130, 40, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+		ZeroMemory(&ccThickness, sizeof(ccThickness));
+		ccThickness.lStructSize = sizeof(ccThickness);
+		ccThickness.hwndOwner = hwndMain; // Окно-владелец диалога
+		ccThickness.lpCustColors = (LPDWORD)customColorsThickness;
+		ccThickness.rgbResult = RGB(255, 0, 0);
+		ccThickness.Flags = CC_FULLOPEN | CC_RGBINIT; // Флаги диалога (полный выбор цвета и начальное значение)
+#pragma endregion
+
+#pragma region Color Choose Brush
+		HWND hButton2 = CreateWindow(L"BUTTON", L"Цвет заливки", WS_CHILD | WS_VISIBLE, 0, 160, 130, 40, hwnd, (HMENU)1002, GetModuleHandle(NULL), NULL);
+		ZeroMemory(&ccBrush, sizeof(ccBrush));
+		ccBrush.lStructSize = sizeof(ccBrush);
+		ccBrush.hwndOwner = hwndMain;
+		ccBrush.lpCustColors = (LPDWORD)customColorsThickness;
+		ccBrush.rgbResult = RGB(255, 0, 0);
+		ccBrush.Flags = CC_FULLOPEN | CC_RGBINIT;
 #pragma endregion
 		break;
 	}
@@ -129,11 +140,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-			HPEN hPen = CreatePen(PS_SOLID, Thickness, selectedColor);
+			HPEN hPen = CreatePen(PS_SOLID, Thickness, selectedColorThickness);
+			HBRUSH hBrush = CreateSolidBrush(selectedColorBrush);
 			SelectObject(hdc, hPen);
+			SelectObject(hdc, hBrush);
 			BitBlt(hdc, PW.x1, PW.y1, PW.Width, PW.Height, hdcBuffer, 0, 0, SRCCOPY);
 			DrawShape(hdc);
 			DeleteObject(hPen);
+			DeleteObject(hBrush);
 			EndPaint(hwnd, &ps);
 		}
 		break;
@@ -226,9 +240,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == 1001)
 		{
-			if (ChooseColor(&cc))
+			if (ChooseColor(&ccThickness))
 			{
-				selectedColor = cc.rgbResult;
+				selectedColorThickness = ccThickness.rgbResult;
+			}
+		}
+		if (LOWORD(wParam) == 1002)
+		{
+			if (ChooseColor(&ccBrush))
+			{
+				selectedColorBrush = ccBrush.rgbResult;
 			}
 		}
 		break;
