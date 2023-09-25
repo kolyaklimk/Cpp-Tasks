@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <vector>
 #include <CommCtrl.h> // Для работы с элементами управления из библиотеки Common Controls
+#include <commdlg.h>
+
 #define M_PI 3.141592653589793238462643383279
 struct Shape
 {
@@ -25,17 +27,12 @@ struct PaintWindow
 
 // Глобальные переменные
 HINSTANCE hInst;
-HWND hwndMain;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndListView;
-HWND hwndComboBox;
-
-HWND hwndInput1;
-HWND hwndInput2;
-HWND hwndInput3;
-HWND hwndInput4;
-HWND hwndButtonOK;
+HWND hwndMain, hwndListView, hwndComboBox, hSlider, hSliderThickness;
+COLORREF customColors[16]{ 0 }; // Массив для хранения пользовательских цветов
+CHOOSECOLOR cc; // Структура для диалога выбора цвета
+COLORREF selectedColor;
 
 PaintWindow PW;
 int selectedItemIndex = -1;
@@ -43,11 +40,12 @@ std::vector<Shape> shapes;
 RECT currentShape; // Текущая фигура (рисуется во временном буфере)
 bool isDrawing = false;
 int selectedShape = 0;
-int n = 4;
+int n = 3;
+int Thickness = 1;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-HWND CreateButton(HWND hwndParent, int x, int y, int width, int height, LPCTSTR text, int id);
 void DrawShape(HDC hdc);
+void FillRectWindow();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -61,9 +59,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hdcBuffer = CreateCompatibleDC(hdc);
 	hBitmap = CreateCompatibleBitmap(hdc, PW.Width, PW.Height);
 	SelectObject(hdcBuffer, hBitmap);
+	ShowWindow(hwndMain, nCmdShow);
+
+	RECT rectSlider{ 0,0,PW.x1,PW.y2 };
+	FillRect(hdc, &rectSlider, (HBRUSH)(COLOR_WINDOW));
 	ReleaseDC(hwndMain, hdc);
 
-	ShowWindow(hwndMain, nCmdShow);
 	UpdateWindow(hwndMain);
 
 	MSG msg;
@@ -84,10 +85,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_CREATE: {
+
 #pragma region Elements
 		hwndComboBox = CreateWindow(
 			L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST,
-			0, 40, 260, 200, hwnd, NULL, NULL, NULL
+			0, 00, 130, 200, hwnd, NULL, NULL, NULL
 		);
 
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Круг (A)");
@@ -96,6 +98,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		SendMessage(hwndComboBox, CB_SETCURSEL, 0, 0);
 #pragma endregion		
+
+#pragma region SliderN
+		hSlider = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 40, 130, 40, hwnd, NULL, hInst, NULL);
+		SendMessage(hSlider, TBM_SETRANGE, TRUE, MAKELPARAM(3, 20));
+		SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
+		EnableWindow(hSlider, FALSE);
+#pragma endregion
+
+#pragma region Slider Thickness
+		hSliderThickness = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 80, 130, 40, hwnd, NULL, hInst, NULL);
+		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(1, 40));
+#pragma endregion
+
+#pragma region Color Choose
+		HWND hButton = CreateWindow(L"BUTTON", L"Цвет линии", WS_CHILD | WS_VISIBLE, 0, 120, 130, 40, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+		ZeroMemory(&cc, sizeof(cc));
+		cc.lStructSize = sizeof(cc);
+		cc.hwndOwner = hwndMain; // Окно-владелец диалога
+		cc.lpCustColors = (LPDWORD)customColors;
+		cc.rgbResult = RGB(255, 0, 0);
+		cc.Flags = CC_FULLOPEN | CC_RGBINIT; // Флаги диалога (полный выбор цвета и начальное значение)
+#pragma endregion
 		break;
 	}
 
@@ -105,8 +129,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
+			HPEN hPen = CreatePen(PS_SOLID, Thickness, selectedColor);
+			SelectObject(hdc, hPen);
 			BitBlt(hdc, PW.x1, PW.y1, PW.Width, PW.Height, hdcBuffer, 0, 0, SRCCOPY);
 			DrawShape(hdc);
+			DeleteObject(hPen);
 			EndPaint(hwnd, &ps);
 		}
 		break;
@@ -114,16 +141,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 	{
-		isDrawing = true;
-		currentShape.left = LOWORD(lParam);
-		currentShape.top = HIWORD(lParam);
-		currentShape.right = LOWORD(lParam);
-		currentShape.bottom = HIWORD(lParam);
+		if (LOWORD(lParam) >= PW.x1) {
+			isDrawing = true;
+			currentShape.left = LOWORD(lParam);
+			currentShape.top = HIWORD(lParam);
+			currentShape.right = LOWORD(lParam);
+			currentShape.bottom = HIWORD(lParam);
 
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hwnd, &ps);
-		BitBlt(hdcBuffer, 0, 0, PW.Width, PW.Height, hdc, PW.x1, PW.y1, SRCCOPY);
-		EndPaint(hwnd, &ps);
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hwnd, &ps);
+			BitBlt(hdcBuffer, 0, 0, PW.Width, PW.Height, hdc, PW.x1, PW.y1, SRCCOPY);
+			EndPaint(hwnd, &ps);
+		}
 		break;
 	}
 
@@ -131,10 +160,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (isDrawing)
 		{
-			currentShape.right = LOWORD(lParam);
-			currentShape.bottom = HIWORD(lParam);
+			if (LOWORD(lParam) >= PW.x1) {
+				currentShape.right = LOWORD(lParam);
+				currentShape.bottom = HIWORD(lParam);
 
-			InvalidateRect(hwnd, NULL, TRUE);
+				InvalidateRect(hwnd, NULL, TRUE);
+			}
 		}
 		break;
 	}
@@ -150,24 +181,67 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			shapes.push_back({ currentShape, false,n,selectedShape });
 		}
 		currentShape = { 0, 0, 0, 0 };
-
-		InvalidateRect(hwndListView, NULL, TRUE);
 		break;
 	}
 
 	case WM_CHAR:
+	{
 		selectedShape = tolower((unsigned char)wParam) - L'a';
 		SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
+		if (selectedShape == 1)
+		{
+			SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
+			EnableWindow(hSlider, TRUE);
+			UpdateWindow(hSlider);
+		}
+		else
+		{
+			SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
+			EnableWindow(hSlider, FALSE);
+			FillRectWindow();
+		}
 		break;
+	}
 
 	case WM_COMMAND:
+	{
 		if (LOWORD(wParam) == 0 && HIWORD(wParam) == CBN_SELCHANGE) {
 			int selectedIndex = SendMessage(hwndComboBox, CB_GETCURSEL, 0, 0);
 			if (selectedIndex != CB_ERR) {
+				if (selectedIndex == 1)
+				{
+					SendMessage(hSlider, WM_SETREDRAW, TRUE, 0);
+					EnableWindow(hSlider, TRUE);
+					UpdateWindow(hSlider);
+				}
+				else
+				{
+					SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
+					EnableWindow(hSlider, FALSE);
+					FillRectWindow();
+				}
 				selectedShape = selectedIndex;
 			}
 			SetFocus(hwnd);
 		}
+		if (LOWORD(wParam) == 1001)
+		{
+			if (ChooseColor(&cc))
+			{
+				selectedColor = cc.rgbResult;
+			}
+		}
+		break;
+	}
+
+	case WM_HSCROLL:
+		if (lParam == (LPARAM)hSlider)
+			n = SendMessage(hSlider, TBM_GETPOS, 0, 0);
+
+		if (lParam == (LPARAM)hSliderThickness)
+			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
+
+		SetFocus(hwnd);
 		break;
 
 	case WM_DESTROY:
@@ -181,9 +255,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-HWND CreateButton(HWND hwndParent, int x, int y, int width, int height, LPCTSTR text, int id)
-{
-	return CreateWindow(L"BUTTON", text, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, x, y, width, height, hwndParent, (HMENU)id, hInst, NULL);
+void FillRectWindow() {
+	HDC hdchwndMain = GetDC(hwndMain);
+	RECT rect1{ 0,40,130,80 };
+	FillRect(hdchwndMain, &rect1, (HBRUSH)(COLOR_WINDOW));
+	ReleaseDC(hwndMain, hdchwndMain);
 }
 
 void DrawShape(HDC hdc)
@@ -260,8 +336,8 @@ void DrawShape(HDC hdc)
 
 			for (int i = 0; i < n; i++)
 			{
-				int x = static_cast<int>(centerX + width / 2 * cos(i * angle + M_PI / 4));
-				int y = static_cast<int>(centerY + height / 2 * sin(i * angle + M_PI / 4));
+				int x = static_cast<int>(centerX + width / 2 * cos(i * angle));
+				int y = static_cast<int>(centerY + height / 2 * sin(i * angle));
 				vertices.push_back({ x, y });
 			}
 
