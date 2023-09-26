@@ -12,10 +12,10 @@ struct Shape
 	bool isCorrect;
 	int n;
 	int selectedShape;
-	// 0 - круг
-	// 1 - n-угольник
-	// 2 - Прямая
-	// 3 - Карандашь
+	// 1 - круг
+	// 2 - n-угольник
+	// 3 - Прямая
+	// 4 - Карандашь
 	int Thickness;
 	COLORREF selectedColorThickness;
 	COLORREF selectedColorBrush;
@@ -45,12 +45,14 @@ COLORREF selectedColorThickness, selectedColorBrush;
 PaintWindow PW;
 int selectedItemIndex = -1;
 std::vector<Shape> shapes;
-RECT currentShape; // Текущая фигура (рисуется во временном буфере)
+RECT currentShape;
 bool isDrawing = false;
-int selectedShape = 0;
+bool isMove = false;
+int selectedShape = 1;
 int n = 3;
 int Thickness = 1;
 std::vector<POINT> pen;
+POINT startPos;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void DrawShape(HDC* hdc, bool isCorrect);
@@ -62,7 +64,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
 
-	hwndMain = CreateWindow(L"MyWindowClass", L"Графический редактор", WS_OVERLAPPEDWINDOW, NULL, NULL, PW.x2, PW.y2, NULL, NULL, hInstance, NULL);
+	hwndMain = CreateWindow(L"MyWindowClass", L"Графический редактор", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, NULL, NULL, PW.x2, PW.y2, NULL, NULL, hInstance, NULL);
 	SetWindowLong(hwndMain, GWL_STYLE, GetWindowLong(hwndMain, GWL_STYLE) & ~WS_THICKFRAME);
 
 	HDC hdc = GetDC(hwndMain);
@@ -99,12 +101,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma region Elements
 		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL, 0, 00, PW.x1, 200, hwnd, NULL, NULL, NULL);
 
+		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Перемещение (E)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Круг (A)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"N-угольник (B)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Прямая (C)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Карандашь (D)");
 
-		SendMessage(hwndComboBox, CB_SETCURSEL, 0, 0);
+		SendMessage(hwndComboBox, CB_SETCURSEL, 1, 0);
 #pragma endregion		
 
 #pragma region SliderN
@@ -140,10 +143,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 
 #pragma region Color Choose Brush
-		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, 0, 220, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
-		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 510, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
-		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 550, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
-		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 550, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
+		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, 0, 240, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
+		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 530, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
+		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 570, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
+		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 570, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
 #pragma endregion
 		break;
 	}
@@ -169,7 +172,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 	{
-		if (LOWORD(lParam) >= PW.x1) {
+		if (LOWORD(lParam) >= PW.x1 && selectedShape != 0) {
 			isDrawing = true;
 			currentShape.left = LOWORD(lParam);
 			currentShape.top = HIWORD(lParam);
@@ -181,9 +184,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			BitBlt(hdcBuffer, 0, 0, PW.Width, PW.Height, hdc, PW.x1, PW.y1, SRCCOPY);
 			EndPaint(hwnd, &ps);
 
-			if (selectedShape == 3) {
+			if (selectedShape == 4) {
 				pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 			}
+		}
+		if (selectedShape == 0)
+		{
+			isMove = true;
+			startPos = { LOWORD(lParam), HIWORD(lParam) };
 		}
 		break;
 	}
@@ -196,10 +204,43 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				currentShape.right = LOWORD(lParam);
 				currentShape.bottom = HIWORD(lParam);
 
-				if (selectedShape == 3) {
+				if (selectedShape == 4) {
 					pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 				}
 				InvalidateRect(hwnd, NULL, TRUE);
+			}
+		}
+		if (isMove)
+		{
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				selectedIndex = shapes.size() - selectedIndex - 1;
+
+				int x = LOWORD(lParam) - startPos.x;
+				int y = HIWORD(lParam) - startPos.y;
+
+				if (shapes[selectedIndex].selectedShape == 4)
+				{
+					std::vector<POINT> bufpoints = shapes[selectedIndex].pen;
+					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+					{
+						shapes[selectedIndex].pen[a].x += x;
+						shapes[selectedIndex].pen[a].y += y;
+					}
+					RePaint(false, false);
+					shapes[selectedIndex].pen = bufpoints;
+					bufpoints.clear();
+				}
+				else
+				{
+					RECT bufrect = shapes[selectedIndex].rect;
+					shapes[selectedIndex].rect.left += x;
+					shapes[selectedIndex].rect.right += x;
+					shapes[selectedIndex].rect.top += y;
+					shapes[selectedIndex].rect.bottom += y;
+					RePaint(false, false);
+					shapes[selectedIndex].rect = bufrect;
+				}
 			}
 		}
 		break;
@@ -209,15 +250,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (isDrawing) {
 			isDrawing = false;
-			if (selectedShape == 3) {
+			if (selectedShape == 4) {
 				pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 			}
-			if (GetKeyState(VK_SHIFT) & 0x8000) {
-				shapes.push_back({ currentShape, true,n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush,pen });
-			}
-			else {
-				shapes.push_back({ currentShape, false,n,selectedShape,Thickness,selectedColorThickness,selectedColorBrush,pen });
-			}
+			shapes.push_back({ currentShape, bool(GetKeyState(VK_SHIFT) & 0x8000),n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush,pen });
 			pen.clear();
 
 			wchar_t buffer[30];
@@ -225,6 +261,36 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hwndList, LB_INSERTSTRING, (WPARAM)0, (LPARAM)buffer);
 
 			currentShape = { 0, 0, 0, 0 };
+		}
+		if (isMove) {
+			isMove = false;
+
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				selectedIndex = shapes.size() - selectedIndex - 1;
+
+				int x = LOWORD(lParam) - startPos.x;
+				int y = HIWORD(lParam) - startPos.y;
+
+				if (shapes[selectedIndex].selectedShape == 4)
+				{
+					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+					{
+						shapes[selectedIndex].pen[a].x += x;
+						shapes[selectedIndex].pen[a].y += y;
+					}
+					RePaint(false, false);
+				}
+				else
+				{
+					shapes[selectedIndex].rect.left += x;
+					shapes[selectedIndex].rect.right += x;
+					shapes[selectedIndex].rect.top += y;
+					shapes[selectedIndex].rect.bottom += y;
+					RePaint(false, false);
+				}
+			}
+			SetFocus(hwndMain);
 		}
 		break;
 	}
@@ -236,10 +302,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			RePaint(true, true);
 			SetFocus(hwnd);
 		}
-		else if (GetKeyState(VK_SHIFT) < 0)
-		{
-
-		}
 		else
 		{
 			switch (lower)
@@ -247,16 +309,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			case L'a':
 			case L'c':
 			case L'd':
-				selectedShape = lower - L'a';
+				selectedShape = lower - L'a' + 1;
 				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
 				ShowWindow(hSlider, SW_HIDE);
 				FillRectWindow();
 				break;
 
 			case L'b':
-				selectedShape = lower - L'a';
+				selectedShape = lower - L'a' + 1;
 				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
 				ShowWindow(hSlider, SW_SHOW);
+				break;
+
+			case L'e':
+				selectedShape = 0;
+				SendMessage(hwndComboBox, CB_SETCURSEL, selectedShape, 0);
+				ShowWindow(hSlider, SW_HIDE);
+				FillRectWindow();
 				break;
 			}
 		}
@@ -268,7 +337,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (LOWORD(wParam) == 0 && HIWORD(wParam) == CBN_SELCHANGE) {
 			int selectedIndex = SendMessage(hwndComboBox, CB_GETCURSEL, 0, 0);
 			if (selectedIndex != CB_ERR) {
-				if (selectedIndex == 1)
+				if (selectedIndex == 2)
 				{
 					ShowWindow(hSlider, SW_SHOW);
 				}
@@ -382,13 +451,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (lParam == (LPARAM)hSliderThickness)
 			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
 
+		if (lParam == (LPARAM)hSliderThickness)
+			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
+
 		SetFocus(hwnd);
 		break;
 	}
 
 	case WM_DESTROY:
+	{
 		PostQuitMessage(0);
 		break;
+	}
 	}
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -396,7 +470,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void FillRectWindow() {
 	HDC hdchwndMain = GetDC(hwndMain);
-	RECT rect1{ 0,40,PW.x1,80 };
+	RECT rect1{ 0,0,PW.x1,PW.y2 };
 	FillRect(hdchwndMain, &rect1, (HBRUSH)(COLOR_WINDOW));
 	ReleaseDC(hwndMain, hdchwndMain);
 }
@@ -466,7 +540,7 @@ void DrawShape(HDC* hdc, bool isCorrect)
 
 	switch (selectedShape) {
 		// Круг
-	case 0:
+	case 1:
 		if (isCorrect) {
 			int centerX = (*x1 + *x2) / 2;
 			int centerY = (*y1 + *y2) / 2;
@@ -479,7 +553,7 @@ void DrawShape(HDC* hdc, bool isCorrect)
 		break;
 
 		// N-угольник
-	case 1:
+	case 2:
 		if (isCorrect)
 		{
 			double angle = 2 * M_PI / n;
@@ -544,14 +618,16 @@ void DrawShape(HDC* hdc, bool isCorrect)
 		break;
 
 		// Прямая
-	case 2:
+	case 3:
 		MoveToEx(*hdc, *x1, *y1, NULL);
 		LineTo(*hdc, *x2, *y2);
 		break;
 
 		// Карандаш
-	case 3:
+	case 4:
 		Polyline(*hdc, (POINT*)&pen[0], pen.size());
 		break;
 	}
+
+	FillRectWindow();
 }
