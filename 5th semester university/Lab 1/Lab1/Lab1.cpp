@@ -52,7 +52,7 @@ int Thickness = 1;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void DrawShape(HDC hdc, bool isCorrect);
 void FillRectWindow();
-void RePaint(bool ctrlZ);
+void RePaint(bool ctrlZ, bool del);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -94,7 +94,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 #pragma region Elements
-		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST, 0, 00, PW.x1, 200, hwnd, NULL, NULL, NULL);
+		hwndComboBox = CreateWindow(L"COMBOBOX", NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL, 0, 00, PW.x1, 200, hwnd, NULL, NULL, NULL);
 
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"Круг (A)");
 		SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)L"N-угольник (B)");
@@ -107,7 +107,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		hSlider = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 40, PW.x1, 40, hwnd, NULL, hInst, NULL);
 		SendMessage(hSlider, TBM_SETRANGE, TRUE, MAKELPARAM(3, 20));
 		SendMessage(hSlider, WM_SETREDRAW, FALSE, 0);
-		EnableWindow(hSlider, FALSE);
+		ShowWindow(hSlider, SW_HIDE);
 #pragma endregion
 
 #pragma region Slider Thickness
@@ -136,13 +136,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 
 #pragma region Color Choose Brush
-		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY, 0, 220, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
-		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 540, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
-		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 580, PW.x1, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
-		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, 0, 620, PW.x1, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
-		ShowWindow(hwndDeleteItem, SW_HIDE);
-		ShowWindow(hwndUpItem, SW_HIDE);
-		ShowWindow(hwndDownItem, SW_HIDE);
+		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL , 0, 220, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
+		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 510, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
+		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 550, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
+		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 550, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
 #pragma endregion
 		break;
 	}
@@ -218,7 +215,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			wchar_t buffer[30];
 			swprintf(buffer, 30, L"(%d, %d), (%d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
-			SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)buffer);
+			SendMessage(hwndList, LB_INSERTSTRING, (WPARAM)0, (LPARAM)buffer);
 
 			currentShape = { 0, 0, 0, 0 };
 		}
@@ -229,7 +226,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		int lower = tolower((unsigned char)wParam);
 		if (wParam == 'Z' && GetKeyState(VK_CONTROL) < 0) {
-			RePaint(true);
+			RePaint(true, true);
 			SetFocus(hwnd);
 		}
 		else if (GetKeyState(VK_SHIFT) < 0)
@@ -290,24 +287,73 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				selectedColorBrush = ccBrush.rgbResult;
 			}
 		}
-		if (LOWORD(wParam) == 100) {
-			int ewq = HIWORD(wParam);
-			if (ewq == LBN_SELCHANGE) {
-				ShowWindow(hwndDeleteItem, SW_SHOW);
-				ShowWindow(hwndUpItem, SW_SHOW);
-				ShowWindow(hwndDownItem, SW_SHOW);
-			}
-			else {
-				/*SendMessage(hwndList, LB_SETCURSEL, (WPARAM)-1, 0);
-				ShowWindow(hwndDeleteItem, SW_HIDE);
-				ShowWindow(hwndUpItem, SW_HIDE);
-				ShowWindow(hwndDownItem, SW_HIDE);
-				FillRectWindow();*/
-			}
-		}
+
 		if (LOWORD(wParam) == 101)
 		{
-			RePaint(false);
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				RePaint(false, true);
+			}
+			else
+			{
+				MessageBox(NULL, L"Не выбран элемент в списке!", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+		}
+
+		if (LOWORD(wParam) == 102)
+		{
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				if (selectedIndex > 0)
+				{
+					Shape buf = shapes[shapes.size() - selectedIndex];
+					shapes[shapes.size() - selectedIndex] = shapes[shapes.size() - selectedIndex - 1];
+					shapes[shapes.size() - selectedIndex - 1] = buf;
+
+					wchar_t buffer1[30];
+					wchar_t buffer2[30];
+					SendMessage(hwndList, LB_GETTEXT, selectedIndex - 1, (LPARAM)buffer1);
+					SendMessage(hwndList, LB_GETTEXT, selectedIndex, (LPARAM)buffer2);
+					SendMessage(hwndList, LB_DELETESTRING, selectedIndex - 1, 0);
+					SendMessage(hwndList, LB_DELETESTRING, selectedIndex - 1, 0);
+					SendMessage(hwndList, LB_INSERTSTRING, selectedIndex - 1, (LPARAM)buffer1);
+					SendMessage(hwndList, LB_INSERTSTRING, selectedIndex - 1, (LPARAM)buffer2);
+					SendMessage(hwndList, LB_SETCURSEL, selectedIndex - 1, 0);
+					RePaint(false, false);
+				}
+			}
+			else
+			{
+				MessageBox(NULL, L"Не выбран элемент в списке!", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+		}
+
+		if (LOWORD(wParam) == 103)
+		{
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				if (selectedIndex < shapes.size() - 1)
+				{
+					Shape buf = shapes[shapes.size() - selectedIndex - 1];
+					shapes[shapes.size() - selectedIndex - 1] = shapes[shapes.size() - selectedIndex - 2];
+					shapes[shapes.size() - selectedIndex - 2] = buf;
+
+					wchar_t buffer1[30];
+					wchar_t buffer2[30];
+					SendMessage(hwndList, LB_GETTEXT, selectedIndex + 1, (LPARAM)buffer1);
+					SendMessage(hwndList, LB_GETTEXT, selectedIndex, (LPARAM)buffer2);
+					SendMessage(hwndList, LB_DELETESTRING, selectedIndex, 0);
+					SendMessage(hwndList, LB_DELETESTRING, selectedIndex, 0);
+					SendMessage(hwndList, LB_INSERTSTRING, selectedIndex, (LPARAM)buffer2);
+					SendMessage(hwndList, LB_INSERTSTRING, selectedIndex, (LPARAM)buffer1);
+					SendMessage(hwndList, LB_SETCURSEL, selectedIndex + 1, 0);
+					RePaint(false, false);
+				}
+			}
+			else
+			{
+				MessageBox(NULL, L"Не выбран элемент в списке!", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
 		}
 		break;
 	}
@@ -335,27 +381,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void FillRectWindow() {
 	HDC hdchwndMain = GetDC(hwndMain);
 	RECT rect1{ 0,40,PW.x1,80 };
-	RECT rect2{ 0,540,PW.x1,PW.y2 };
 	FillRect(hdchwndMain, &rect1, (HBRUSH)(COLOR_WINDOW));
-	FillRect(hdchwndMain, &rect2, (HBRUSH)(COLOR_WINDOW));
 	ReleaseDC(hwndMain, hdchwndMain);
 }
 
-void RePaint(bool ctrlZ)
+void RePaint(bool ctrlZ, bool del)
 {
 	if (shapes.size() > 0) {
 		int indexItem;
-		if (ctrlZ)
-		{
-			shapes.pop_back();
-			indexItem = shapes.size();
+		if (del) {
+			if (ctrlZ)
+			{
+				shapes.pop_back();
+				indexItem = 0;
+			}
+			else
+			{
+
+				indexItem = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+				shapes.erase(shapes.begin() + shapes.size() - indexItem - 1);
+			}
+			SendMessage(hwndList, LB_DELETESTRING, indexItem, 0);
 		}
-		else
-		{
-			indexItem = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-			shapes.erase(shapes.begin() + indexItem);
-		}
-		SendMessage(hwndList, LB_DELETESTRING, indexItem, 0);
 
 		COLORREF bufSelectedColorThickness = selectedColorThickness;
 		COLORREF bufSelectedColorBrush = selectedColorBrush;
@@ -391,7 +438,6 @@ void RePaint(bool ctrlZ)
 		Thickness = bufThickness;
 	}
 }
-
 
 void DrawShape(HDC hdc, bool isCorrect)
 {
