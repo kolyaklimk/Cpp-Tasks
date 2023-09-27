@@ -24,8 +24,9 @@ struct Shape
 	int Thickness;
 	COLORREF selectedColorThickness;
 	COLORREF selectedColorBrush;
-	std::vector<POINT> pen;
+	std::vector<Gdiplus::Point> pen;
 	int scale = 100;
+	int rotation = 0;
 };
 
 struct PaintWindow
@@ -42,11 +43,12 @@ struct PaintWindow
 HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndMain, hwndComboBox, hSlider, hSliderThickness, hSliderScale, hwndList, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave;
+HWND hwndMain, hwndComboBox, hSlider, hSliderThickness, hSliderScale, hSliderRotation, hwndList, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave;
 COLORREF customColorsThickness[16]{ 0 };
 COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
 COLORREF selectedColorThickness, selectedColorBrush;
+HHOOK MouseHook;
 
 PaintWindow PW;
 int selectedItemIndex = -1;
@@ -57,11 +59,12 @@ bool isMove = false;
 int selectedShape = 1;
 int n = 3;
 int Thickness = 1;
-std::vector<POINT> pen;
-POINT startPos;
+std::vector<Gdiplus::Point> pen;
+Gdiplus::Point startPos;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-void DrawShape(HDC* hdc, bool isCorrect, int scale = 100);
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::SolidBrush* brush, bool isCorrect, int scale = 100, int rotation = 0);
 void FillRectWindow();
 void RePaint(bool ctrlZ, bool del);
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
@@ -72,6 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+	MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
@@ -98,11 +102,81 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DispatchMessage(&msg);
 	}
 
+	UnhookWindowsHookEx(MouseHook);
 	Gdiplus::GdiplusShutdown(gdiplusToken);
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
 
 	return msg.wParam;
+}
+
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		// wParam содержит информацию о событии мыши (WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE и т. д.)
+		if (wParam == WM_MOUSEMOVE)
+		{
+			if (isDrawing || isMove) {
+				POINT mousePos;
+				GetCursorPos(&mousePos);
+				RECT windowRect;
+				GetWindowRect(hwndMain, &windowRect);
+
+				if (mousePos.x < windowRect.left + PW.x1 || mousePos.x > windowRect.right ||
+					mousePos.y < windowRect.top || mousePos.y > windowRect.bottom)
+				{
+					if (isDrawing) {
+						isDrawing = false;
+						InvalidateRect(hwndMain, NULL, TRUE);
+						if (selectedShape == 4) {
+							pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
+						}
+						shapes.push_back({ currentShape, bool(GetKeyState(VK_SHIFT) & 0x8000),n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush,pen });
+						pen.clear();
+
+						wchar_t buffer[30];
+						swprintf(buffer, 30, L"(%d, %d), (%d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
+						SendMessage(hwndList, LB_INSERTSTRING, (WPARAM)0, (LPARAM)buffer);
+
+						currentShape = { 0, 0, 0, 0 };
+					}
+					if (isMove) {
+						isMove = false;
+
+						int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+						if (selectedIndex != LB_ERR) {
+							selectedIndex = shapes.size() - selectedIndex - 1;
+
+							int x = LOWORD(lParam) - startPos.X;
+							int y = HIWORD(lParam) - startPos.Y;
+
+							if (shapes[selectedIndex].selectedShape == 4)
+							{
+								for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+								{
+									shapes[selectedIndex].pen[a].X += x;
+									shapes[selectedIndex].pen[a].Y += y;
+								}
+								RePaint(false, false);
+							}
+							else
+							{
+								shapes[selectedIndex].rect.left += x;
+								shapes[selectedIndex].rect.right += x;
+								shapes[selectedIndex].rect.top += y;
+								shapes[selectedIndex].rect.bottom += y;
+								RePaint(false, false);
+							}
+						}
+						SetFocus(hwndMain);
+					}
+				}
+			}
+		}
+	}
+
+	return CallNextHookEx(MouseHook, nCode, wParam, lParam);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -132,7 +206,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 #pragma region Slider Thickness
 		hSliderThickness = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 80, PW.x1, 40, hwnd, NULL, hInst, NULL);
-		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(1, 100));
+		SendMessage(hSliderThickness, TBM_SETRANGE, TRUE, MAKELPARAM(0, 100));
 #pragma endregion
 
 #pragma region Color Choose Thickness
@@ -160,11 +234,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hSliderScale, TBM_SETRANGE, TRUE, MAKELPARAM(1, 500));
 #pragma endregion
 
+#pragma region Slider Rotation
+		hSliderRotation = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 240, PW.x1, 40, hwnd, NULL, hInst, NULL);
+		SendMessage(hSliderRotation, TBM_SETRANGE, TRUE, MAKELPARAM(0, 360));
+#pragma endregion
+
 #pragma region Color Choose Brush
-		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, 0, 240, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
-		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 530, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
-		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 570, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
-		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 570, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
+		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, 0, 280, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
+		hwndDeleteItem = CreateWindow(L"BUTTON", L"Отменить", WS_CHILD | WS_VISIBLE, 0, 570, PW.x1 / 2, 40, hwnd, (HMENU)99, GetModuleHandle(NULL), NULL);
+		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 570, PW.x1 / 2, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
+		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 610, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
+		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 610, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
 #pragma endregion
 
 #pragma region Color Choose Brush
@@ -179,14 +259,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hwnd, &ps);
-			HPEN hPen = CreatePen(PS_SOLID, Thickness, selectedColorThickness);
-			HBRUSH hBrush = CreateSolidBrush(selectedColorBrush);
-			SelectObject(hdc, hPen);
-			SelectObject(hdc, hBrush);
+			Gdiplus::Graphics graphics(hdc);
+			Gdiplus::Pen pen(Gdiplus::Color({ GetRValue(selectedColorThickness),GetGValue(selectedColorThickness),GetBValue(selectedColorThickness) }));
+			pen.SetWidth(Thickness);
+			Gdiplus::SolidBrush brush(Gdiplus::Color({ GetRValue(selectedColorBrush),GetGValue(selectedColorBrush),GetBValue(selectedColorBrush) }));
 			BitBlt(hdc, PW.x1, PW.y1, PW.Width, PW.Height, hdcBuffer, 0, 0, SRCCOPY);
-			DrawShape(&hdc, GetKeyState(VK_SHIFT) & 0x8000);
-			DeleteObject(hPen);
-			DeleteObject(hBrush);
+			DrawShape(graphics, &pen, &brush, GetKeyState(VK_SHIFT) & 0x8000);
 			EndPaint(hwnd, &ps);
 		}
 		break;
@@ -209,11 +287,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (selectedShape == 4) {
 				pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 			}
+			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		if (selectedShape == 0)
 		{
 			isMove = true;
 			startPos = { LOWORD(lParam), HIWORD(lParam) };
+			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		break;
 	}
@@ -222,15 +302,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (isDrawing)
 		{
-			if (LOWORD(lParam) >= PW.x1) {
-				currentShape.right = LOWORD(lParam);
-				currentShape.bottom = HIWORD(lParam);
+			currentShape.right = LOWORD(lParam);
+			currentShape.bottom = HIWORD(lParam);
 
-				if (selectedShape == 4) {
-					pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
-				}
-				InvalidateRect(hwnd, NULL, TRUE);
+			if (selectedShape == 4) {
+				pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 			}
+			InvalidateRect(hwnd, NULL, TRUE);
 		}
 		if (isMove)
 		{
@@ -238,16 +316,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (selectedIndex != LB_ERR) {
 				selectedIndex = shapes.size() - selectedIndex - 1;
 
-				int x = LOWORD(lParam) - startPos.x;
-				int y = HIWORD(lParam) - startPos.y;
+				int x = LOWORD(lParam) - startPos.X;
+				int y = HIWORD(lParam) - startPos.Y;
 
 				if (shapes[selectedIndex].selectedShape == 4)
 				{
-					std::vector<POINT> bufpoints = shapes[selectedIndex].pen;
+					std::vector<Gdiplus::Point> bufpoints = shapes[selectedIndex].pen;
 					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
 					{
-						shapes[selectedIndex].pen[a].x += x;
-						shapes[selectedIndex].pen[a].y += y;
+						shapes[selectedIndex].pen[a].X += x;
+						shapes[selectedIndex].pen[a].Y += y;
 					}
 					RePaint(false, false);
 					shapes[selectedIndex].pen = bufpoints;
@@ -272,6 +350,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (isDrawing) {
 			isDrawing = false;
+			InvalidateRect(hwnd, NULL, TRUE);
 			if (selectedShape == 4) {
 				pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
 			}
@@ -291,15 +370,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (selectedIndex != LB_ERR) {
 				selectedIndex = shapes.size() - selectedIndex - 1;
 
-				int x = LOWORD(lParam) - startPos.x;
-				int y = HIWORD(lParam) - startPos.y;
+				int x = LOWORD(lParam) - startPos.X;
+				int y = HIWORD(lParam) - startPos.Y;
 
 				if (shapes[selectedIndex].selectedShape == 4)
 				{
 					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
 					{
-						shapes[selectedIndex].pen[a].x += x;
-						shapes[selectedIndex].pen[a].y += y;
+						shapes[selectedIndex].pen[a].X += x;
+						shapes[selectedIndex].pen[a].Y += y;
 					}
 					RePaint(false, false);
 				}
@@ -377,6 +456,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (ChooseColor(&ccThickness))
 			{
 				selectedColorThickness = ccThickness.rgbResult;
+				int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+				if (selectedIndex != LB_ERR)
+				{
+					shapes[shapes.size() - selectedIndex - 1].selectedColorThickness = ccThickness.rgbResult;
+					RePaint(false, false);
+				}
 			}
 		}
 		if (LOWORD(wParam) == 1002)
@@ -384,6 +469,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (ChooseColor(&ccBrush))
 			{
 				selectedColorBrush = ccBrush.rgbResult;
+				int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+				if (selectedIndex != LB_ERR)
+				{
+					shapes[shapes.size() - selectedIndex - 1].selectedColorBrush = ccBrush.rgbResult;
+					RePaint(false, false);
+				}
 			}
 		}
 		if (LOWORD(wParam) == 100) {
@@ -392,10 +483,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 				SetFocus(hwndMain);
 				SendMessage(hwndList, LB_SETSEL, selectedIndex, 0);
-				SendMessage(hSliderScale, TBM_SETPOS, TRUE, 100);
+				SendMessage(hSliderScale, TBM_SETPOS, TRUE, shapes[shapes.size() - selectedIndex - 1].scale);
+				SendMessage(hSliderRotation, TBM_SETPOS, TRUE, shapes[shapes.size() - selectedIndex - 1].rotation);
+				SendMessage(hSliderThickness, TBM_SETPOS, TRUE, shapes[shapes.size() - selectedIndex - 1].Thickness);
+				SendMessage(hSlider, TBM_SETPOS, TRUE, shapes[shapes.size() - selectedIndex - 1].n);
 			}
 		}
-		if (LOWORD(wParam) == 101)
+		if (LOWORD(wParam) == 99)
+		{
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR) {
+				SetFocus(hwndMain);
+				SendMessage(hwndList, LB_SETCURSEL, -1, 0);
+			}
+			else
+			{
+				MessageBox(NULL, L"Не выбран элемент в списке!", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+		}if (LOWORD(wParam) == 101)
 		{
 			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 			if (selectedIndex != LB_ERR) {
@@ -490,17 +595,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_HSCROLL:
 	{
+		int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 		if (lParam == (LPARAM)hSlider)
-			n = SendMessage(hSlider, TBM_GETPOS, 0, 0);
+		{
+			n = SendMessage(hSlider, TBM_GETPOS, 0, 0);selectedColorThickness = ccThickness.rgbResult;
+			if (selectedIndex != LB_ERR)
+			{
+				shapes[shapes.size() - selectedIndex - 1].n = n;
+				RePaint(false, false);
+			}
+		}
 
 		if (lParam == (LPARAM)hSliderThickness)
+		{
 			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
+			if (selectedIndex != LB_ERR)
+			{
+				shapes[shapes.size() - selectedIndex - 1].Thickness = Thickness;
+				RePaint(false, false);
+			}
+		}
 
 		if (lParam == (LPARAM)hSliderScale) {
-			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 			if (selectedIndex != LB_ERR)
 			{
 				shapes[shapes.size() - selectedIndex - 1].scale = SendMessage(hSliderScale, TBM_GETPOS, 0, 0);
+				RePaint(false, false);
+			}
+		}
+
+		if (lParam == (LPARAM)hSliderRotation) {
+			if (selectedIndex != LB_ERR)
+			{
+				shapes[shapes.size() - selectedIndex - 1].rotation = SendMessage(hSliderRotation, TBM_GETPOS, 0, 0);
 				RePaint(false, false);
 			}
 		}
@@ -528,7 +655,8 @@ void FillRectWindow() {
 
 void RePaint(bool ctrlZ, bool del)
 {
-	if (shapes.size() > 0) {
+	if (shapes.size() > 0)
+	{
 		int indexItem;
 		if (del) {
 			if (ctrlZ)
@@ -545,35 +673,35 @@ void RePaint(bool ctrlZ, bool del)
 			SendMessage(hwndList, LB_DELETESTRING, indexItem, 0);
 		}
 
-		COLORREF bufSelectedColorThickness = selectedColorThickness;
-		COLORREF bufSelectedColorBrush = selectedColorBrush;
+		COLORREF bufSCT = selectedColorThickness;
+		COLORREF bufSCB = selectedColorBrush;
 		RECT bufCurrentShape = currentShape;
 		int bufSelectedShape = selectedShape;
 		int bufn = n;
-		std::vector<POINT> bufpen = pen;
+		std::vector<Gdiplus::Point> bufpen = pen;
 
 		HDC hdc = GetDC(hwndMain);
 		RECT rect1{ PW.x1, PW.y1, PW.x2, PW.y2, };
 		FillRect(hdc, &rect1, (HBRUSH)(COLOR_WINDOW + 1));
 
 		for (int a = 0; a < shapes.size();a++) {
-			HPEN hPen = CreatePen(PS_SOLID, shapes[a].Thickness, shapes[a].selectedColorThickness);
-			HBRUSH hBrush = CreateSolidBrush(shapes[a].selectedColorBrush);
-			SelectObject(hdc, hPen);
-			SelectObject(hdc, hBrush);
 			n = shapes[a].n;
 			selectedShape = shapes[a].selectedShape;
 			pen = shapes[a].pen;
+			selectedColorThickness = shapes[a].selectedColorThickness;
+			selectedColorBrush = shapes[a].selectedColorBrush;
 			currentShape = shapes[a].rect;
-			DrawShape(&hdc, shapes[a].isCorrect, shapes[a].scale);
-			DeleteObject(hPen);
-			DeleteObject(hBrush);
+			Gdiplus::Graphics graphics(hdc);
+			Gdiplus::Pen pen(Gdiplus::Color({ GetRValue(selectedColorThickness),GetGValue(selectedColorThickness),GetBValue(selectedColorThickness) }));
+			pen.SetWidth(shapes[a].Thickness);
+			Gdiplus::SolidBrush brush(Gdiplus::Color({ GetRValue(selectedColorBrush),GetGValue(selectedColorBrush),GetBValue(selectedColorBrush) }));
+			DrawShape(graphics, &pen, &brush, shapes[a].isCorrect, shapes[a].scale, shapes[a].rotation);
 		}
 
 		ReleaseDC(hwndMain, hdc);
 
-		selectedColorThickness = bufSelectedColorThickness;
-		selectedColorBrush = bufSelectedColorBrush;
+		selectedColorThickness = bufSCT;
+		selectedColorBrush = bufSCB;
 		currentShape = bufCurrentShape;
 		selectedShape = bufSelectedShape;
 		n = bufn;
@@ -582,46 +710,53 @@ void RePaint(bool ctrlZ, bool del)
 	}
 }
 
-void DrawShape(HDC* hdc, bool isCorrect, int scale)
+void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::SolidBrush* brush, bool isCorrect, int scale, int rotation)
 {
 	long x1 = currentShape.left;
 	long y1 = currentShape.top;
 	long x2 = currentShape.right;
 	long y2 = currentShape.bottom;
 
-	if (scale != 100 && selectedShape != 4)
-	{
-		float s = scale / 100.0;
-		int newWidth = static_cast<int>((x2 - x1) * s);
-		int newHeight = static_cast<int>((y2 - y1) * s);
-		x1 = (x1 + x2) / 2 - newWidth / 2;
-		y1 = (y1 + y2) / 2 - newHeight / 2;
-		x2 = x1 + newWidth;
-		y2 = y1 + newHeight;
-	}
+	float s = scale / 100.0;
+	graphics.TranslateTransform((x2 + x1) / 2, (y2 + y1) / 2);
+	graphics.ScaleTransform(s, s);
+	graphics.RotateTransform(rotation);
+	graphics.TranslateTransform(-(x2 + x1) / 2, -(y2 + y1) / 2);
 
 	switch (selectedShape) {
 		// Круг
 	case 1:
+	{
 		if (isCorrect) {
 			int centerX = (x1 + x2) / 2;
 			int centerY = (y1 + y2) / 2;
 			int radius = (x2 - x1) / 2;
-			Ellipse(*hdc, centerX - radius, centerY - radius, centerX + radius, centerY + radius);
+			x1 = centerX - radius;
+			x2 = centerX + radius;
+			y1 = centerY - radius;
+			y2 = centerY + radius;
+
+			Gdiplus::Rect ellipseRect(x1, y1, x2 - x1, y2 - y1);
+
+			graphics.FillEllipse(brush, ellipseRect);
+			graphics.DrawEllipse(penPlus, ellipseRect);
 		}
 		else {
-			Ellipse(*hdc, x1, y1, x2, y2);
+			Gdiplus::Rect ellipseRect(x1, y1, x2 - x1, y2 - y1);
+
+			graphics.FillEllipse(brush, ellipseRect);
+			graphics.DrawEllipse(penPlus, ellipseRect);
 		}
 		break;
-
-		// N-угольник
-	case 2:
+	}
+	// N-угольник
+	case 2: {
 		if (isCorrect)
 		{
 			double angle = 2 * M_PI / n;
 			int radius, x;
 			int y = y1;
-			std::vector<POINT> vertices;
+			std::vector<Gdiplus::Point> vertices;
 
 			if (x2 >= x1)
 			{
@@ -653,8 +788,8 @@ void DrawShape(HDC* hdc, bool isCorrect, int scale)
 				x += static_cast<int>(radius * 2 * cos(angle * i));
 				y += static_cast<int>(radius * 2 * sin(angle * i));
 			}
-
-			Polygon(*hdc, vertices.data(), n);
+			graphics.FillPolygon(brush, &vertices[0], vertices.size());
+			graphics.DrawPolygon(penPlus, &vertices[0], vertices.size());
 		}
 		else
 		{
@@ -663,7 +798,7 @@ void DrawShape(HDC* hdc, bool isCorrect, int scale)
 			int centerX = (x1 + x2) / 2;
 			int centerY = (y1 + y2) / 2;
 			double angle = 2 * M_PI / n;
-			std::vector<POINT> vertices;
+			std::vector<Gdiplus::Point> vertices;
 
 			for (int i = 0; i < n; i++)
 			{
@@ -672,48 +807,26 @@ void DrawShape(HDC* hdc, bool isCorrect, int scale)
 				vertices.push_back({ x, y });
 			}
 
-			if (!vertices.empty())
-			{
-				Polygon(*hdc, vertices.data(), static_cast<int>(vertices.size()));
-			}
-		}
-		break;
-
-		// Прямая
-	case 3:
-		MoveToEx(*hdc, x1, y1, NULL);
-		LineTo(*hdc, x2, y2);
-		break;
-
-		// Карандаш
-	case 4:
-		if (scale != 100)
-		{
-			std::vector<POINT> bufpen = pen;
-			float s = scale / 100.0;
-			POINT center = { 0, 0 };
-			for (int i = 0; i < bufpen.size(); i++) {
-				center.x += bufpen[i].x;
-				center.y += bufpen[i].y;
-			}
-			center.x /= bufpen.size();
-			center.y /= bufpen.size();
-			for (int i = 0; i < pen.size(); i++) {
-				int deltaX = bufpen[i].x - center.x;
-				int deltaY = bufpen[i].y - center.y;
-				bufpen[i].x = center.x + static_cast<int>(deltaX * s);
-				bufpen[i].y = center.y + static_cast<int>(deltaY * s);
-			}
-			Polyline(*hdc, (POINT*)&bufpen[0], pen.size());
-			bufpen.clear();
-		}
-		else
-		{
-			Polyline(*hdc, (POINT*)&pen[0], pen.size());
+			graphics.FillPolygon(brush, &vertices[0], vertices.size());
+			graphics.DrawPolygon(penPlus, &vertices[0], vertices.size());
 		}
 		break;
 	}
+		  // Прямая
+	case 3: {
+		Gdiplus::Point startPoint(x1, y1);
+		Gdiplus::Point endPoint(x2, y2);
+		graphics.DrawLine(penPlus, startPoint, endPoint);
+		break;
+	}
 
+		  // Карандаш
+	case 4:
+	{
+		graphics.DrawCurve(penPlus, &pen[0], pen.size());
+		break;
+	}
+	}
 	FillRectWindow();
 }
 
