@@ -500,7 +500,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				MessageBox(NULL, L"Не выбран элемент в списке!", L"Ошибка", MB_ICONERROR | MB_OK);
 			}
-		}if (LOWORD(wParam) == 101)
+		}
+		if (LOWORD(wParam) == 101)
 		{
 			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 			if (selectedIndex != LB_ERR) {
