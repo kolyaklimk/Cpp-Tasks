@@ -571,25 +571,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == 104)
 		{
-			HWND desktop = GetDesktopWindow();
 			HDC screenDC = GetDC(hwndMain);
+			RECT windowRect;
+			GetWindowRect(hwndMain, &windowRect);
 
 			HBITMAP hBitmap = CreateCompatibleBitmap(screenDC, PW.Width - 16, PW.Height - 35);
 
 			HDC memDC = CreateCompatibleDC(screenDC);
 			SelectObject(memDC, hBitmap);
-			BitBlt(memDC, 0, 0, PW.Width - 16, PW.Height - 35, screenDC, PW.x1, PW.y1, SRCCOPY);
+			BitBlt(memDC, 0, 0, windowRect.right- windowRect.left+PW.x1, windowRect.bottom - windowRect.top, screenDC, PW.x1, PW.y1, SRCCOPY);
 
 			Gdiplus::Bitmap bitmap(hBitmap, NULL);
 
 			CLSID pngClsid;
-			int rez = GetEncoderClsid(L"image/png", &pngClsid);
+			GetEncoderClsid(L"image/png", &pngClsid);
 
 			bitmap.Save(L"paint.png", &pngClsid, NULL);
 
 			DeleteObject(hBitmap);
 			DeleteDC(memDC);
-			ReleaseDC(desktop, screenDC);
 		}
 		break;
 	}
