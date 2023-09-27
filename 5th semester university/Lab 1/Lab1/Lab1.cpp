@@ -1,8 +1,13 @@
 #include <windows.h>
 #include <vector>
-#include <CommCtrl.h> // Для работы с элементами управления из библиотеки Common Controls
+#include <CommCtrl.h> 
 #include <commdlg.h>
 #include <string>
+#include <GdiPlus.h>
+#include <iostream>
+
+#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "user32.lib")
 
 #define M_PI 3.141592653589793238462643383279
 
@@ -20,6 +25,7 @@ struct Shape
 	COLORREF selectedColorThickness;
 	COLORREF selectedColorBrush;
 	std::vector<POINT> pen;
+	int scale = 100;
 };
 
 struct PaintWindow
@@ -36,7 +42,7 @@ struct PaintWindow
 HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndMain, hwndComboBox, hSlider, hSliderThickness, hwndList, hwndDeleteItem, hwndUpItem, hwndDownItem;
+HWND hwndMain, hwndComboBox, hSlider, hSliderThickness, hSliderScale, hwndList, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave;
 COLORREF customColorsThickness[16]{ 0 };
 COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
@@ -55,12 +61,18 @@ std::vector<POINT> pen;
 POINT startPos;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-void DrawShape(HDC* hdc, bool isCorrect);
+void DrawShape(HDC* hdc, bool isCorrect, int scale = 100);
 void FillRectWindow();
 void RePaint(bool ctrlZ, bool del);
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
 
@@ -86,6 +98,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DispatchMessage(&msg);
 	}
 
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
 
@@ -142,11 +155,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ccBrush.Flags = CC_FULLOPEN | CC_RGBINIT;
 #pragma endregion
 
+#pragma region Slider Scale
+		hSliderScale = CreateWindowEx(0, TRACKBAR_CLASS, NULL, TBS_AUTOTICKS | TBS_ENABLESELRANGE | WS_CHILD | WS_VISIBLE, 0, 200, PW.x1, 40, hwnd, NULL, hInst, NULL);
+		SendMessage(hSliderScale, TBM_SETRANGE, TRUE, MAKELPARAM(1, 500));
+#pragma endregion
+
 #pragma region Color Choose Brush
 		hwndList = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, 0, 240, PW.x1, 300, hwnd, (HMENU)100, GetModuleHandle(NULL), NULL);
 		hwndDeleteItem = CreateWindow(L"BUTTON", L"Удалить", WS_CHILD | WS_VISIBLE, 0, 530, PW.x1, 40, hwnd, (HMENU)101, GetModuleHandle(NULL), NULL);
 		hwndUpItem = CreateWindow(L"BUTTON", L"Вверх", WS_CHILD | WS_VISIBLE, 0, 570, PW.x1 / 2, 40, hwnd, (HMENU)102, GetModuleHandle(NULL), NULL);
 		hwndDownItem = CreateWindow(L"BUTTON", L"Вниз", WS_CHILD | WS_VISIBLE, PW.x1 / 2, 570, PW.x1 / 2, 40, hwnd, (HMENU)103, GetModuleHandle(NULL), NULL);
+#pragma endregion
+
+#pragma region Color Choose Brush
+		hwndSave = CreateWindow(L"BUTTON", L"Сохранить", WS_CHILD | WS_VISIBLE, 0, PW.y2 - 80, PW.x1, 40, hwnd, (HMENU)104, GetModuleHandle(NULL), NULL);
 #pragma endregion
 		break;
 	}
@@ -370,6 +392,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 				SetFocus(hwndMain);
 				SendMessage(hwndList, LB_SETSEL, selectedIndex, 0);
+				SendMessage(hSliderScale, TBM_SETPOS, TRUE, 100);
 			}
 		}
 		if (LOWORD(wParam) == 101)
@@ -440,6 +463,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			SetFocus(hwndMain);
 		}
+		if (LOWORD(wParam) == 104)
+		{
+			HWND desktop = GetDesktopWindow();
+			HDC screenDC = GetDC(hwndMain);
+
+			HBITMAP hBitmap = CreateCompatibleBitmap(screenDC, PW.Width - 16, PW.Height - 35);
+
+			HDC memDC = CreateCompatibleDC(screenDC);
+			SelectObject(memDC, hBitmap);
+			BitBlt(memDC, 0, 0, PW.Width - 16, PW.Height - 35, screenDC, PW.x1, PW.y1, SRCCOPY);
+
+			Gdiplus::Bitmap bitmap(hBitmap, NULL);
+
+			CLSID pngClsid;
+			int rez = GetEncoderClsid(L"image/png", &pngClsid);
+
+			bitmap.Save(L"paint.png", &pngClsid, NULL);
+
+			DeleteObject(hBitmap);
+			DeleteDC(memDC);
+			ReleaseDC(desktop, screenDC);
+		}
 		break;
 	}
 
@@ -451,8 +496,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (lParam == (LPARAM)hSliderThickness)
 			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
 
-		if (lParam == (LPARAM)hSliderThickness)
-			Thickness = SendMessage(hSliderThickness, TBM_GETPOS, 0, 0);
+		if (lParam == (LPARAM)hSliderScale) {
+			int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+			if (selectedIndex != LB_ERR)
+			{
+				shapes[shapes.size() - selectedIndex - 1].scale = SendMessage(hSliderScale, TBM_GETPOS, 0, 0);
+				RePaint(false, false);
+			}
+		}
 
 		SetFocus(hwnd);
 		break;
@@ -514,7 +565,7 @@ void RePaint(bool ctrlZ, bool del)
 			selectedShape = shapes[a].selectedShape;
 			pen = shapes[a].pen;
 			currentShape = shapes[a].rect;
-			DrawShape(&hdc, shapes[a].isCorrect);
+			DrawShape(&hdc, shapes[a].isCorrect, shapes[a].scale);
 			DeleteObject(hPen);
 			DeleteObject(hBrush);
 		}
@@ -531,24 +582,35 @@ void RePaint(bool ctrlZ, bool del)
 	}
 }
 
-void DrawShape(HDC* hdc, bool isCorrect)
+void DrawShape(HDC* hdc, bool isCorrect, int scale)
 {
-	long* x1 = &currentShape.left;
-	long* y1 = &currentShape.top;
-	long* x2 = &currentShape.right;
-	long* y2 = &currentShape.bottom;
+	long x1 = currentShape.left;
+	long y1 = currentShape.top;
+	long x2 = currentShape.right;
+	long y2 = currentShape.bottom;
+
+	if (scale != 100 && selectedShape != 4)
+	{
+		float s = scale / 100.0;
+		int newWidth = static_cast<int>((x2 - x1) * s);
+		int newHeight = static_cast<int>((y2 - y1) * s);
+		x1 = (x1 + x2) / 2 - newWidth / 2;
+		y1 = (y1 + y2) / 2 - newHeight / 2;
+		x2 = x1 + newWidth;
+		y2 = y1 + newHeight;
+	}
 
 	switch (selectedShape) {
 		// Круг
 	case 1:
 		if (isCorrect) {
-			int centerX = (*x1 + *x2) / 2;
-			int centerY = (*y1 + *y2) / 2;
-			int radius = (*x2 - *x1) / 2;
+			int centerX = (x1 + x2) / 2;
+			int centerY = (y1 + y2) / 2;
+			int radius = (x2 - x1) / 2;
 			Ellipse(*hdc, centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 		}
 		else {
-			Ellipse(*hdc, *x1, *y1, *x2, *y2);
+			Ellipse(*hdc, x1, y1, x2, y2);
 		}
 		break;
 
@@ -558,32 +620,32 @@ void DrawShape(HDC* hdc, bool isCorrect)
 		{
 			double angle = 2 * M_PI / n;
 			int radius, x;
-			int y = *y1;
+			int y = y1;
 			std::vector<POINT> vertices;
 
-			if (*x2 >= *x1)
+			if (x2 >= x1)
 			{
-				if (*y2 >= *y1)
+				if (y2 >= y1)
 				{
-					radius = (*x2 - *x1) / 2;
+					radius = (x2 - x1) / 2;
 				}
 				else
 				{
-					radius = (*x1 - *x2) / 2;
+					radius = (x1 - x2) / 2;
 				}
-				x = *x1 + (*x2 - *x1) / 2 - radius * tan(M_PI / n);
+				x = x1 + (x2 - x1) / 2 - radius * tan(M_PI / n);
 			}
 			else
 			{
-				if (*y2 >= *y1)
+				if (y2 >= y1)
 				{
-					radius = (*x1 - *x2) / 2;
+					radius = (x1 - x2) / 2;
 				}
 				else
 				{
-					radius = (*x2 - *x1) / 2;
+					radius = (x2 - x1) / 2;
 				}
-				x = *x1 - abs(*x2 - *x1) / 2 - radius * tan(M_PI / n);
+				x = x1 - abs(x2 - x1) / 2 - radius * tan(M_PI / n);
 			}
 
 			for (int i = 0; i < n; i++) {
@@ -596,10 +658,10 @@ void DrawShape(HDC* hdc, bool isCorrect)
 		}
 		else
 		{
-			int width = *x2 - *x1;
-			int height = *y2 - *y1;
-			int centerX = (*x1 + *x2) / 2;
-			int centerY = (*y1 + *y2) / 2;
+			int width = x2 - x1;
+			int height = y2 - y1;
+			int centerX = (x1 + x2) / 2;
+			int centerY = (y1 + y2) / 2;
 			double angle = 2 * M_PI / n;
 			std::vector<POINT> vertices;
 
@@ -619,15 +681,69 @@ void DrawShape(HDC* hdc, bool isCorrect)
 
 		// Прямая
 	case 3:
-		MoveToEx(*hdc, *x1, *y1, NULL);
-		LineTo(*hdc, *x2, *y2);
+		MoveToEx(*hdc, x1, y1, NULL);
+		LineTo(*hdc, x2, y2);
 		break;
 
 		// Карандаш
 	case 4:
-		Polyline(*hdc, (POINT*)&pen[0], pen.size());
+		if (scale != 100)
+		{
+			std::vector<POINT> bufpen = pen;
+			float s = scale / 100.0;
+			POINT center = { 0, 0 };
+			for (int i = 0; i < bufpen.size(); i++) {
+				center.x += bufpen[i].x;
+				center.y += bufpen[i].y;
+			}
+			center.x /= bufpen.size();
+			center.y /= bufpen.size();
+			for (int i = 0; i < pen.size(); i++) {
+				int deltaX = bufpen[i].x - center.x;
+				int deltaY = bufpen[i].y - center.y;
+				bufpen[i].x = center.x + static_cast<int>(deltaX * s);
+				bufpen[i].y = center.y + static_cast<int>(deltaY * s);
+			}
+			Polyline(*hdc, (POINT*)&bufpen[0], pen.size());
+			bufpen.clear();
+		}
+		else
+		{
+			Polyline(*hdc, (POINT*)&pen[0], pen.size());
+		}
 		break;
 	}
 
 	FillRectWindow();
+}
+
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+{
+	UINT  num = 0;          // number of image encoders
+	UINT  size = 0;         // size of the image encoder array in bytes
+
+	Gdiplus::ImageCodecInfo* pImageCodecInfo = NULL;
+
+	Gdiplus::GetImageEncodersSize(&num, &size);
+	if (size == 0)
+		return -1;  // Failure
+
+	pImageCodecInfo = (Gdiplus::ImageCodecInfo*)(malloc(size));
+	if (pImageCodecInfo == NULL)
+		return -1;  // Failure
+
+	GetImageEncoders(num, size, pImageCodecInfo);
+
+	for (UINT j = 0; j < num; ++j)
+	{
+		if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0)
+		{
+			*pClsid = pImageCodecInfo[j].Clsid;
+			free(pImageCodecInfo);
+			return j;  // Success
+		}
+	}
+
+	free(pImageCodecInfo);
+	return -1;  // Failure
 }
