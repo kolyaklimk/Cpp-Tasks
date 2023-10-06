@@ -153,7 +153,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 							if (shapes[selectedIndex].selectedShape == 4)
 							{
-								for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+								for (long a = 0; a < shapes[selectedIndex].pen.size(); a++)
 								{
 									shapes[selectedIndex].pen[a].X += x;
 									shapes[selectedIndex].pen[a].Y += y;
@@ -324,7 +324,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (shapes[selectedIndex].selectedShape == 4)
 				{
 					std::vector<Gdiplus::Point> bufpoints = shapes[selectedIndex].pen;
-					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+					for (long a = 0; a < shapes[selectedIndex].pen.size(); a++)
 					{
 						shapes[selectedIndex].pen[a].X += x;
 						shapes[selectedIndex].pen[a].Y += y;
@@ -377,7 +377,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				if (shapes[selectedIndex].selectedShape == 4)
 				{
-					for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+					for (long a = 0; a < shapes[selectedIndex].pen.size(); a++)
 					{
 						shapes[selectedIndex].pen[a].X += x;
 						shapes[selectedIndex].pen[a].Y += y;
@@ -571,7 +571,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			SetFocus(hwndMain);
 		}
-		if (LOWORD(wParam) == 104) 
+		if (LOWORD(wParam) == 104)
 		{
 			// Открываем файл для чтения в двоичном режиме
 			HANDLE fileHandle = CreateFile(L"shapes.dat", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -586,15 +586,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Создаем memory-mapped файл для чтения
 			HANDLE mapHandle = CreateFileMapping(fileHandle, NULL, PAGE_READONLY, 0, fileSize, NULL);
 			if (mapHandle == NULL) {
-				CloseHandle(fileHandle); 
+				CloseHandle(fileHandle);
 				MessageBox(NULL, L"Error 2: Не удалось создать memory-mapped файл для чтения!", L"Ошибка", MB_ICONERROR | MB_OK);
 				return 1;
 			}
-			CloseHandle(fileHandle); 
+			CloseHandle(fileHandle);
 
 			// Отображаем файл в память для чтения
-			LPVOID mapView = MapViewOfFile(mapHandle, FILE_MAP_READ, 0, 0, 0); 
-			if (mapView == NULL) { 
+			LPVOID mapView = MapViewOfFile(mapHandle, FILE_MAP_READ, 0, 0, 0);
+			if (mapView == NULL) {
 				CloseHandle(mapHandle);
 				MessageBox(NULL, L"Error 3: Не удалось отобразить файл в память для чтения!", L"Ошибка", MB_ICONERROR | MB_OK);
 				return 1;
@@ -609,60 +609,60 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// Копируем данные из memory-mapped файла в вектор
 			for (size_t i = 0; i < numShapes; ++i) {
-				shapes.push_back(*(reinterpret_cast<const Shape*>(static_cast<const char*>(mapView) + i * sizeof(Shape)))); 
-			} 
+				shapes.push_back(*(reinterpret_cast<const Shape*>(static_cast<const char*>(mapView) + i * sizeof(Shape))));
+			}
 
 			// Закрываем memory-mapped файл и файл на диске
 			UnmapViewOfFile(mapView);
 			RePaint(false, false, true);
 
-			MessageBox(NULL, L"Проект открыт!", L"Успех", MB_ICONERROR | MB_OK);
+			MessageBox(NULL, L"Проект открыт!", L"Успех", MB_ICONINFORMATION | MB_OK);
 		}
 		if (LOWORD(wParam) == 105)
-		{			 
+		{
 			// Создаем memory-mapped файл
-			HANDLE mapHandle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Shape) * shapes.size(), L"MyMappedFile");  
+			HANDLE mapHandle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Shape) * shapes.size(), L"MyMappedFile");
 			if (mapHandle == NULL) {
-				MessageBox(NULL, L"Error 1. Не удалось создать memory-mapped файл!", L"Ошибка", MB_ICONERROR | MB_OK); 
-				return 1; 
-			} 
- 
+				MessageBox(NULL, L"Error 1. Не удалось создать memory-mapped файл!", L"Ошибка", MB_ICONERROR | MB_OK);
+				return 1;
+			}
+
 			// Отображаем файл в память 
-			LPVOID mapView = MapViewOfFile(mapHandle, FILE_MAP_WRITE, 0, 0, 0); 
-			if (mapView == NULL) { 
+			LPVOID mapView = MapViewOfFile(mapHandle, FILE_MAP_WRITE, 0, 0, 0);
+			if (mapView == NULL) {
 				CloseHandle(mapHandle);
 				MessageBox(NULL, L"Error 2. Не удалось отобразить файл в память!", L"Ошибка", MB_ICONERROR | MB_OK);
-				return 1; 
-			} 
+				return 1;
+			}
 
 			// Закрываем memory-mapped файл
 			CloseHandle(mapHandle);
 
 			// Копируем данные из вектора в memory-mapped файл 
-			memcpy(mapView, &shapes[0], sizeof(Shape) * shapes.size()); 
- 
+			memcpy(mapView, &shapes[0], sizeof(Shape) * shapes.size());
+
 			// Открываем файл для записи на диск в двоичном режиме 
-			HANDLE fileHandle = CreateFile(L"shapes.dat", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-			if (fileHandle == INVALID_HANDLE_VALUE) { 
+			HANDLE fileHandle = CreateFile(L"shapes.dat", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (fileHandle == INVALID_HANDLE_VALUE) {
 				MessageBox(NULL, L"Error 3. Не удалось открыть файл для записи!", L"Ошибка", MB_ICONERROR | MB_OK);
-				return 1; 
-			} 
+				return 1;
+			}
 
 			// Читаем данные из memory-mapped файла и записываем их на диск
 			OVERLAPPED overlapped;
 			memset(&overlapped, 0, sizeof(OVERLAPPED));
 			DWORD bytesWritten;
-			WriteFile(fileHandle, mapView, sizeof(Shape)* shapes.size(), NULL, &overlapped);
+			WriteFile(fileHandle, mapView, sizeof(Shape) * shapes.size(), NULL, &overlapped);
 			if (!GetOverlappedResult(fileHandle, &overlapped, &bytesWritten, TRUE)) {
 				MessageBox(NULL, L"Error 4. Не удалось записать данные на диск!", L"Ошибка", MB_ICONERROR | MB_OK);
 				return 1;
 			}
 
-			MessageBox(NULL, L"Проект сохранён!", L"Успех", MB_ICONERROR | MB_OK);
+			MessageBox(NULL, L"Проект сохранён!", L"Успех", MB_ICONINFORMATION | MB_OK);
 			// Закрываем memory-mapped файл и файл на диске
 			UnmapViewOfFile(mapView);
 			CloseHandle(fileHandle);
-		} 
+		}
 		if (LOWORD(wParam) == 106)
 		{
 			HDC screenDC = GetDC(hwndMain);
@@ -673,7 +673,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			HDC memDC = CreateCompatibleDC(screenDC);
 			SelectObject(memDC, hBitmap);
-			BitBlt(memDC, 0, 0, windowRect.right- windowRect.left+PW.x1, windowRect.bottom - windowRect.top, screenDC, PW.x1, PW.y1, SRCCOPY);
+			BitBlt(memDC, 0, 0, windowRect.right - windowRect.left + PW.x1, windowRect.bottom - windowRect.top, screenDC, PW.x1, PW.y1, SRCCOPY);
 
 			Gdiplus::Bitmap bitmap(hBitmap, NULL);
 
@@ -685,16 +685,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			MessageBox(NULL, L"Png сохранено!", L"Успех", MB_ICONERROR | MB_OK);
 			DeleteObject(hBitmap);
 			DeleteDC(memDC);
-		} 
-		break; 
-	} 
+		}
+		break;
+	}
 
 	case WM_HSCROLL:
 	{
 		int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 		if (lParam == (LPARAM)hSlider)
 		{
-			n = SendMessage(hSlider, TBM_GETPOS, 0, 0);selectedColorThickness = ccThickness.rgbResult;
+			n = SendMessage(hSlider, TBM_GETPOS, 0, 0); selectedColorThickness = ccThickness.rgbResult;
 			if (selectedIndex != LB_ERR)
 			{
 				shapes[shapes.size() - selectedIndex - 1].n = n;
@@ -753,7 +753,7 @@ void RePaint(bool ctrlZ, bool del, bool list)
 {
 	if (list) {
 		SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
-		for (int a = 0; a < shapes.size(); a++) 
+		for (int a = 0; a < shapes.size(); a++)
 		{
 			wchar_t buffer[30];
 			swprintf(buffer, 30, L"(%d, %d), (%d, %d)", shapes[a].rect.left, shapes[a].rect.top, shapes[a].rect.right, shapes[a].rect.bottom);
@@ -789,7 +789,7 @@ void RePaint(bool ctrlZ, bool del, bool list)
 		RECT rect1{ PW.x1, PW.y1, PW.x2, PW.y2, };
 		FillRect(hdc, &rect1, (HBRUSH)(COLOR_WINDOW + 1));
 
-		for (int a = 0; a < shapes.size();a++) {
+		for (int a = 0; a < shapes.size(); a++) {
 			n = shapes[a].n;
 			selectedShape = shapes[a].selectedShape;
 			pen = shapes[a].pen;
