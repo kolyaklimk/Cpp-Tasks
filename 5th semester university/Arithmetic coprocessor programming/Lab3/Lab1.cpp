@@ -63,7 +63,7 @@ std::vector<Gdiplus::Point> pen;
 Gdiplus::Point startPos;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-//LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::SolidBrush* brush, bool isCorrect, int scale = 100, int rotation = 0);
 void FillRectWindow();
 void RePaint(bool ctrlZ, bool del, bool list = false);
@@ -75,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-	//MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
+	MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
@@ -110,74 +110,74 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return msg.wParam;
 }
 
-//LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
-//{
-//	if (nCode == HC_ACTION)
-//	{
-//		// wParam содержит информацию о событии мыши (WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE и т. д.)
-//		if (wParam == WM_MOUSEMOVE)
-//		{
-//			if (isDrawing || isMove) {
-//				POINT mousePos;
-//				GetCursorPos(&mousePos);
-//				RECT windowRect;
-//				GetWindowRect(hwndMain, &windowRect);
-//
-//				if (mousePos.x < windowRect.left + PW.x1 || mousePos.x > windowRect.right ||
-//					mousePos.y < windowRect.top || mousePos.y > windowRect.bottom)
-//				{
-//					if (isDrawing) {
-//						isDrawing = false;
-//						InvalidateRect(hwndMain, NULL, TRUE);
-//						if (selectedShape == 4) {
-//							pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
-//						}
-//						shapes.push_back({ currentShape, bool(GetKeyState(VK_SHIFT) & 0x8000),n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush,pen });
-//						pen.clear();
-//
-//						wchar_t buffer[30];
-//						swprintf(buffer, 30, L"(%d, %d), (%d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
-//						SendMessage(hwndList, LB_INSERTSTRING, (WPARAM)0, (LPARAM)buffer);
-//
-//						currentShape = { 0, 0, 0, 0 };
-//					}
-//					if (isMove) {
-//						isMove = false;
-//
-//						int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-//						if (selectedIndex != LB_ERR) {
-//							selectedIndex = shapes.size() - selectedIndex - 1;
-//
-//							int x = LOWORD(lParam) - startPos.X;
-//							int y = HIWORD(lParam) - startPos.Y;
-//
-//							if (shapes[selectedIndex].selectedShape == 4)
-//							{
-//								for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
-//								{
-//									shapes[selectedIndex].pen[a].X += x;
-//									shapes[selectedIndex].pen[a].Y += y;
-//								}
-//								RePaint(false, false);
-//							}
-//							else
-//							{
-//								shapes[selectedIndex].rect.left += x;
-//								shapes[selectedIndex].rect.right += x;
-//								shapes[selectedIndex].rect.top += y;
-//								shapes[selectedIndex].rect.bottom += y;
-//								RePaint(false, false);
-//							}
-//						}
-//						SetFocus(hwndMain);
-//					}
-//				}
-//			}
-//		}
-//	}
-//
-//	return CallNextHookEx(MouseHook, nCode, wParam, lParam);
-//}
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION)
+	{
+		// wParam содержит информацию о событии мыши (WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE и т. д.)
+		if (wParam == WM_MOUSEMOVE)
+		{
+			if (isDrawing || isMove) {
+				POINT mousePos;
+				GetCursorPos(&mousePos);
+				RECT windowRect;
+				GetWindowRect(hwndMain, &windowRect);
+
+				if (mousePos.x < windowRect.left + PW.x1 || mousePos.x > windowRect.right ||
+					mousePos.y < windowRect.top || mousePos.y > windowRect.bottom)
+				{
+					if (isDrawing) {
+						isDrawing = false;
+						InvalidateRect(hwndMain, NULL, TRUE);
+						if (selectedShape == 4) {
+							pen.push_back({ LOWORD(lParam) ,HIWORD(lParam) });
+						}
+						shapes.push_back({ currentShape, bool(GetKeyState(VK_SHIFT) & 0x8000),n,selectedShape, Thickness,selectedColorThickness,selectedColorBrush,pen });
+						pen.clear();
+
+						wchar_t buffer[30];
+						swprintf(buffer, 30, L"(%d, %d), (%d, %d)", currentShape.left, currentShape.top, currentShape.right, currentShape.bottom);
+						SendMessage(hwndList, LB_INSERTSTRING, (WPARAM)0, (LPARAM)buffer);
+
+						currentShape = { 0, 0, 0, 0 };
+					}
+					if (isMove) {
+						isMove = false;
+
+						int selectedIndex = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+						if (selectedIndex != LB_ERR) {
+							selectedIndex = shapes.size() - selectedIndex - 1;
+
+							int x = LOWORD(lParam) - startPos.X;
+							int y = HIWORD(lParam) - startPos.Y;
+
+							if (shapes[selectedIndex].selectedShape == 4)
+							{
+								for (long a = 0;a < shapes[selectedIndex].pen.size();a++)
+								{
+									shapes[selectedIndex].pen[a].X += x;
+									shapes[selectedIndex].pen[a].Y += y;
+								}
+								RePaint(false, false);
+							}
+							else
+							{
+								shapes[selectedIndex].rect.left += x;
+								shapes[selectedIndex].rect.right += x;
+								shapes[selectedIndex].rect.top += y;
+								shapes[selectedIndex].rect.bottom += y;
+								RePaint(false, false);
+							}
+						}
+						SetFocus(hwndMain);
+					}
+				}
+			}
+		}
+	}
+
+	return CallNextHookEx(MouseHook, nCode, wParam, lParam);
+}
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
