@@ -649,8 +649,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			} 
 
 			// Читаем данные из memory-mapped файла и записываем их на диск
+			OVERLAPPED overlapped;
+			memset(&overlapped, 0, sizeof(OVERLAPPED));
 			DWORD bytesWritten;
-			if (!WriteFile(fileHandle, mapView, sizeof(Shape) * shapes.size(), &bytesWritten, NULL)) {
+			WriteFile(fileHandle, mapView, sizeof(Shape)* shapes.size(), NULL, &overlapped);
+			if (!GetOverlappedResult(fileHandle, &overlapped, &bytesWritten, TRUE)) {
 				MessageBox(NULL, L"Error 4. Не удалось записать данные на диск!", L"Ошибка", MB_ICONERROR | MB_OK);
 				return 1;
 			}
