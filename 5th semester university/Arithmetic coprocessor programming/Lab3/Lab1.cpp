@@ -651,7 +651,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Читаем данные из memory-mapped файла и записываем их на диск
 			DWORD bytesWritten;
 			if (!WriteFile(fileHandle, mapView, sizeof(Shape) * shapes.size(), &bytesWritten, NULL)) {
-				MessageBox(NULL, L"Error 4. Не удалось записать данные на диск!", L"Ошибка", MB_ICONERROR | MB_OK); 
+				MessageBox(NULL, L"Error 4. Не удалось записать данные на диск!", L"Ошибка", MB_ICONERROR | MB_OK);
+				return 1;
 			}
 
 			MessageBox(NULL, L"Проект сохранён!", L"Успех", MB_ICONERROR | MB_OK);
