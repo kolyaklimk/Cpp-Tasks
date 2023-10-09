@@ -83,51 +83,48 @@ void UpdateData()
 {
 	while (true)
 	{
-		FILETIME idleTime, kernelTime, userTime;
-		if (GetSystemTimes(&idleTime, &kernelTime, &userTime))
-		{
-			PDH_HQUERY query; 
-			PDH_HCOUNTER counter; 
-			PDH_FMT_COUNTERVALUE value; 
+		PDH_HQUERY query;
+		PDH_HCOUNTER counter;
+		PDH_FMT_COUNTERVALUE value;
 
-			// Инициализация библиотеки PDH
-			bool ewq = PdhOpenQuery(L"\\NIKOLAY", 0, &query);
-			bool few = PdhAddCounter(query, L"\\Processor Information(_Total)\\% Processor Time", 0, &counter); 
-			PdhCollectQueryData(query); 
-			Sleep(1000); // Подождите некоторое время для получения данных  
+		// Инициализация библиотеки PDH
+		bool ewq = PdhOpenQuery(L"\\NIKOLAY", 0, &query);
+		bool few = PdhAddCounter(query, L"\\Processor Information(_Total)\\% Processor Time", 0, &counter);
+		bool gfds = PdhCollectQueryData(query);
 
-			PdhCollectQueryData(query);  
-			PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value); 
+		this_thread::sleep_for(chrono::milliseconds(1000));
+
+		bool vgfdas = PdhCollectQueryData(query);
+		bool vgfsd = PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value);  \
 
 			// Закрываем библиотеку PDH
-			PdhCloseQuery(query);
-						 
+		PdhCloseQuery(query);
 
 
 
 
 
 
-			// Получаем информацию о памяти (остается без изменений)
-			MEMORYSTATUSEX memInfo; 
-			memInfo.dwLength = sizeof(MEMORYSTATUSEX); 
-			GlobalMemoryStatusEx(&memInfo); 
-			float memoryLoad = (float)(memInfo.ullTotalPhys - memInfo.ullAvailPhys) / (float)memInfo.ullTotalPhys * 100.0f; 
 
-			// Добавляем данные в историю 
-			cpuLoadHistory.push_back(value.doubleValue);
-			memoryLoadHistory.push_back(memoryLoad);
+		// Получаем информацию о памяти (остается без изменений)
+		MEMORYSTATUSEX memInfo;
+		memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+		GlobalMemoryStatusEx(&memInfo);
+		float memoryLoad = (float)(memInfo.ullTotalPhys - memInfo.ullAvailPhys) / (float)memInfo.ullTotalPhys * 100.0f;
 
-			// Ограничиваем историю в 100 точках (можно настроить по своему усмотрению)
-			if (cpuLoadHistory.size() > 300)
-			{
-				cpuLoadHistory.erase(cpuLoadHistory.begin());
-				memoryLoadHistory.erase(memoryLoadHistory.begin());
-			}
+		// Добавляем данные в историю 
+		cpuLoadHistory.push_back(value.doubleValue);
+		memoryLoadHistory.push_back(memoryLoad);
 
-			// Обновляем окно
-			InvalidateRect(NULL, NULL, TRUE);
+		// Ограничиваем историю в 100 точках (можно настроить по своему усмотрению)
+		if (cpuLoadHistory.size() > 300)
+		{
+			cpuLoadHistory.erase(cpuLoadHistory.begin());
+			memoryLoadHistory.erase(memoryLoadHistory.begin());
 		}
+
+		// Обновляем окно
+		InvalidateRect(NULL, NULL, TRUE);
 
 		// Ждем некоторое время перед обновлением данных (замените на реальный мониторинг)
 		this_thread::sleep_for(chrono::milliseconds(100));
