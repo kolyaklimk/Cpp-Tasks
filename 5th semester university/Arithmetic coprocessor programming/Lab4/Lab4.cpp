@@ -2,7 +2,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include <Windows.h>
+#include <windows.h>
 #include <deque>
 #include <pdh.h>
 
@@ -83,27 +83,47 @@ void UpdateData()
 {
 	while (true)
 	{
-		PDH_HQUERY query;
-		PDH_HCOUNTER counter;
-		PDH_FMT_COUNTERVALUE value;
+		PDH_STATUS status;
+		PDH_HCOUNTER hCounter;
+		PDH_HQUERY hQuery;
 
-		// Инициализация библиотеки PDH
-		bool ewq = PdhOpenQuery(L"\\NIKOLAY", 0, &query);
-		bool few = PdhAddCounter(query, L"\\Processor Information(_Total)\\% Processor Time", 0, &counter);
-		bool gfds = PdhCollectQueryData(query);
+		status = PdhOpenQuery(NULL, 0, &hQuery);
+		if (status != ERROR_SUCCESS) {
+			// Обработка ошибки
+			return;
+		}
 
-		this_thread::sleep_for(chrono::milliseconds(1000));
+		// Получение счетчика производительности "Processor Time" для всех процессоров
+		status = PdhAddCounter(hQuery, L"\\Processor Information(_Total)\\% Processor Time", 0, &hCounter);
+		if (status != ERROR_SUCCESS) {
+			// Обработка ошибки
+			return;
+		}
+		status = PdhCollectQueryData(hQuery);
+		if (status != ERROR_SUCCESS) {
+			// Обработка ошибки
+			return;
+		}
+		Sleep(1000);
+		status = PdhCollectQueryData(hQuery);
+		if (status != ERROR_SUCCESS) {
+			// Обработка ошибки
+			return;
+		}
 
-		bool vgfdas = PdhCollectQueryData(query);
-		bool vgfsd = PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value);  \
+		// Получение данных счетчика производительности
+		PDH_FMT_COUNTERVALUE counterValue;
+		status = PdhGetFormattedCounterValue(hCounter, PDH_FMT_DOUBLE, NULL, &counterValue);
+		if (status == ERROR_SUCCESS) {
+			// counterValue.doubleValue содержит использование CPU в процентах
+			printf("Использование CPU: %.2f%%\n", counterValue.doubleValue);
+		}
+		else {
+			// Обработка ошибки
+		}
 
-			// Закрываем библиотеку PDH
-		PdhCloseQuery(query);
-
-
-
-
-
+		// Закрытие запроса производительности
+		PdhCloseQuery(hQuery);
 
 
 		// Получаем информацию о памяти (остается без изменений)
@@ -113,7 +133,7 @@ void UpdateData()
 		float memoryLoad = (float)(memInfo.ullTotalPhys - memInfo.ullAvailPhys) / (float)memInfo.ullTotalPhys * 100.0f;
 
 		// Добавляем данные в историю 
-		cpuLoadHistory.push_back(value.doubleValue);
+		cpuLoadHistory.push_back(counterValue.doubleValue);
 		memoryLoadHistory.push_back(memoryLoad);
 
 		// Ограничиваем историю в 100 точках (можно настроить по своему усмотрению)
@@ -125,9 +145,7 @@ void UpdateData()
 
 		// Обновляем окно
 		InvalidateRect(NULL, NULL, TRUE);
-
 		// Ждем некоторое время перед обновлением данных (замените на реальный мониторинг)
-		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 }
 
@@ -145,9 +163,9 @@ void DrawGraph(HDC hdc, const vector<float>& data, int y, COLORREF color)
 	int step;
 	if (dataSize)
 	{
-		step = max(1, width / dataSize);
+		step = max(10, width / dataSize*10);
 	}
-	step = 1;
+	step = 10;
 
 	for (int i = 0; i < dataSize; i++)
 	{
