@@ -68,7 +68,7 @@ bool isMove = false;
 bool isTaskManager = false;
 int selectedShape = 1;
 int n = 3;
-int speed=1000;
+int speed = 1000;
 int Thickness = 1;
 std::vector<Gdiplus::Point> pen;
 Gdiplus::Point startPos;
@@ -114,7 +114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	UpdateWindow(hwndMain);
 
-	std::thread dataUpdateThread(UpdateData);
+	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)UpdateData, NULL, 0, NULL);
 
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -127,7 +127,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Gdiplus::GdiplusShutdown(gdiplusToken);
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
-	dataUpdateThread.detach();
+
+	TerminateThread(hThread, 0);
+	CloseHandle(hThread);
 
 	return msg.wParam;
 }
@@ -808,7 +810,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
-		
+
 		PostQuitMessage(0);
 		break;
 	}
@@ -1054,14 +1056,14 @@ void UpdateData()
 		PDH_HCOUNTER hCounter[10];
 		PDH_HQUERY hQuery;
 		const LPCWSTR counterPaths[] = {
-			L"\\System\\Processes",
-			L"\\System\\Threads",
-			L"\\Process(_Total)\\Handle Count",
-			L"\\System\\System Up Time",
-			L"\\Memory\\Available Bytes",
-			L"\\Memory\\Committed Bytes",
-			L"\\Memory\\Pool Nonpaged Bytes",
-			L"\\Memory\\Pool Paged Bytes",
+		L"\\System\\Processes",
+		L"\\System\\Threads",
+		L"\\Process(_Total)\\Handle Count",
+		L"\\System\\System Up Time",
+		L"\\Memory\\Available Bytes",
+		L"\\Memory\\Committed Bytes",
+		L"\\Memory\\Pool Nonpaged Bytes",
+		L"\\Memory\\Pool Paged Bytes",
 		};
 
 		status = PdhOpenQuery(NULL, 0, &hQuery);
@@ -1159,7 +1161,7 @@ void DrawGraph(HDC hdc, const std::vector<float>& data, int y, COLORREF color)
 
 	int x = (dataSize - 1) * step + PW.x2;
 	int value = data[dataSize - 1];
-	int barHeight = min((int)((float)value / 100.0 * height), height); 
+	int barHeight = min((int)((float)value / 100.0 * height), height);
 	Rectangle(hdc, x, y, x + step, y - barHeight);
 
 	DeleteObject(hBrush);
