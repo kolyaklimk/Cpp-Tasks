@@ -58,7 +58,6 @@ COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
 COLORREF selectedColorThickness, selectedColorBrush;
 HHOOK MouseHook;
-bool g_isRunning = true;
 
 PaintWindow PW;
 int selectedItemIndex = -1;
@@ -93,7 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-	//MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
+	MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
@@ -128,8 +127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Gdiplus::GdiplusShutdown(gdiplusToken);
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
-	dataUpdateThread.join();
-	g_isRunning = false;
+	dataUpdateThread.detach();
 
 	return msg.wParam;
 }
@@ -810,7 +808,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
-		g_isRunning = false;
+		
 		PostQuitMessage(0);
 		break;
 	}
@@ -1045,7 +1043,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 
 void UpdateData()
 {
-	while (g_isRunning)
+	while (true)
 	{
 		int selectedIndex = SendMessage(hwndComboBoxCP, CB_GETCURSEL, 0, 0);
 		int textLength = SendMessage(hwndComboBoxCP, CB_GETLBTEXTLEN, selectedIndex, 0);
