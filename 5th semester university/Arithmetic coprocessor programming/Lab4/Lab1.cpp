@@ -774,8 +774,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		if (lParam == (LPARAM)hSliderCP)
 		{
-			Thickness = SendMessage(hSliderCP, TBM_GETPOS, 0, 0);
-			speed = Thickness;
+			speed = SendMessage(hSliderCP, TBM_GETPOS, 0, 0);
 		}
 
 		if (lParam == (LPARAM)hSliderThickness)
