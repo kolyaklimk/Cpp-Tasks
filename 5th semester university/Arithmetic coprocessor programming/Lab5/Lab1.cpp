@@ -7,6 +7,7 @@
 #include <iostream>
 #include <pdh.h>
 #include <thread>
+#include <Wininet.h>
 #include <deque>
 #include <chrono>
 #include <Psapi.h>
@@ -14,6 +15,7 @@
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "user32.lib")
+#pragma comment(lib, "wininet.lib")
 
 #define M_PI 3.141592653589793238462643383279
 #define WM_PAINT_CP (WM_APP + 1)
@@ -86,6 +88,55 @@ void UpdateData();
 void DrawGraph(HDC hdc, const std::vector<float>& data, int y, COLORREF color);
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 
+
+void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	DEVMODE prevDevMode, currentDevMode;
+	SYSTEM_POWER_STATUS prevPowerStatus, currentPowerStatus;
+	BOOL prevInternet, currentInternet;
+
+	prevInternet = InternetGetConnectedState(NULL, 0);
+	EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &prevDevMode); 
+	GetSystemPowerStatus(&prevPowerStatus);
+
+	while (true) {
+		EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &currentDevMode);
+		GetSystemPowerStatus(&currentPowerStatus);
+		currentInternet = InternetGetConnectedState(NULL, 0);
+
+		if (prevDevMode.dmPelsWidth != currentDevMode.dmPelsWidth || prevDevMode.dmPelsHeight != currentDevMode.dmPelsHeight) {
+			std::wstring message2 = L"Изменено разрешение экрана: ";
+			message2 += std::to_wstring(currentDevMode.dmPelsWidth);
+			message2 += L" x ";
+			message2 += std::to_wstring(currentDevMode.dmPelsHeight);
+			MessageBox(NULL, message2.c_str(), L"Ошибка", MB_ICONERROR | MB_OK);
+
+			prevDevMode = currentDevMode;
+		}
+
+		if (prevPowerStatus.ACLineStatus != currentPowerStatus.ACLineStatus) {
+			if (currentPowerStatus.ACLineStatus == 0) {
+				MessageBox(NULL, L"Режим питания от аккумулятора.", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+			else {
+				MessageBox(NULL, L"Режим питания от сети", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+			prevPowerStatus = currentPowerStatus;
+		}
+
+		if (currentInternet != prevInternet) { 
+			if (currentInternet == TRUE) { 
+				MessageBox(NULL, L"Есть доступ к интернету.", L"Ошибка", MB_ICONERROR | MB_OK); 
+			}
+			else {
+				MessageBox(NULL, L"Нет доступа к интернету", L"Ошибка", MB_ICONERROR | MB_OK);
+			}
+			prevInternet = currentInternet; 
+		}
+
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	} 
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
@@ -114,7 +165,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	UpdateWindow(hwndMain);
 
-	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)UpdateData, NULL, 0, NULL);
+	HANDLE hThreadUpdateData = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)UpdateData, NULL, 0, NULL);
+	HANDLE hThreadMonitoring = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Monitoring, NULL, 0, NULL);
 
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -128,8 +180,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DeleteObject(hBitmap);
 	DeleteDC(hdcBuffer);
 
-	TerminateThread(hThread, 0);
-	CloseHandle(hThread);
+	TerminateThread(hThreadUpdateData, 0);
+	CloseHandle(hThreadUpdateData);
+	TerminateThread(hThreadMonitoring, 0);
+	CloseHandle(hThreadMonitoring);
 
 	return msg.wParam;
 }
