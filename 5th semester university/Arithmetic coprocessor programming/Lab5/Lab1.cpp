@@ -50,11 +50,16 @@ struct PaintWindow
 	int Height = y2 - y1;
 };
 
+struct RegistryEntry {
+	HKEY parentKey;
+	std::wstring subkeyName;
+};
+
 // Глобальные переменные
 HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndMain, hwndComboBox, hSlider, hSliderCP, hSliderThickness, hSliderScale, hSliderRotation, hwndList, hwndListCP, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave, hwndComboBoxCP;
+HWND hwndMain, hwndComboBox, hSlider, hSliderCP, hSliderThickness, hSliderScale, hSliderRotation, hwndList, hwndListCP, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave, hwndComboBoxCP, hButton6;
 COLORREF customColorsThickness[16]{ 0 };
 COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
@@ -77,6 +82,7 @@ Gdiplus::Point startPos;
 std::vector<float> cpuLoadHistory;
 std::vector<float> memoryLoadHistory;
 std::vector<std::wstring> StarusCP;
+
 #pragma endregion
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -95,7 +101,7 @@ void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dw
 	BOOL prevInternet, currentInternet;
 
 	prevInternet = InternetGetConnectedState(NULL, 0);
-	EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &prevDevMode); 
+	EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &prevDevMode);
 	GetSystemPowerStatus(&prevPowerStatus);
 
 	while (true) {
@@ -123,18 +129,56 @@ void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dw
 			prevPowerStatus = currentPowerStatus;
 		}
 
-		if (currentInternet != prevInternet) { 
-			if (currentInternet == TRUE) { 
-				MessageBox(NULL, L"Есть доступ к интернету.", L"Ошибка", MB_ICONERROR | MB_OK); 
+		if (currentInternet != prevInternet) {
+			if (currentInternet == TRUE) {
+				MessageBox(NULL, L"Есть доступ к интернету.", L"Ошибка", MB_ICONERROR | MB_OK);
 			}
 			else {
 				MessageBox(NULL, L"Нет доступа к интернету", L"Ошибка", MB_ICONERROR | MB_OK);
 			}
-			prevInternet = currentInternet; 
+			prevInternet = currentInternet;
 		}
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
-	} 
+	}
+}
+
+
+void FindEmptyRegistryEntries(HKEY hKey, const std::wstring& subkey, std::vector<RegistryEntry>& emptyEntries) {
+	HKEY hSubKey;
+	if (RegOpenKeyEx(hKey, subkey.c_str(), 0, KEY_ALL_ACCESS, &hSubKey) == ERROR_SUCCESS) {
+		DWORD subkeyCount, maxValueNameLen, maxValueLen;
+		if (RegQueryInfoKey(hSubKey, nullptr, nullptr, nullptr, &subkeyCount, nullptr, nullptr, nullptr, &maxValueNameLen, &maxValueLen, nullptr, nullptr) == ERROR_SUCCESS) {
+			if (subkeyCount == 0 && maxValueNameLen == 0 && maxValueLen == 0) {
+				// Нет подключов и записей в данном ключе, считаем его пустым
+				emptyEntries.push_back({ hKey, subkey });
+			}
+			else {
+				// Проход по подключам
+				for (DWORD i = 0; i < subkeyCount; i++) {
+					WCHAR subkeyName[MAX_PATH];
+					DWORD subkeyNameLen = MAX_PATH;
+					if (RegEnumKeyEx(hSubKey, i, subkeyName, &subkeyNameLen, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
+						std::wstring fullSubkey = subkey + L"\\" + subkeyName;
+						FindEmptyRegistryEntries(hSubKey, fullSubkey, emptyEntries);
+					}
+				}
+			}
+		}
+		RegCloseKey(hSubKey);
+	}
+}
+
+void RemoveEmptyRegistryEntries(const std::vector<RegistryEntry>& emptyEntries) {
+	for (const RegistryEntry& entry : emptyEntries) {
+		LONG result = RegDeleteKey(entry.parentKey, entry.subkeyName.c_str());
+		if (result == ERROR_SUCCESS) {
+			std::wcout << L"Удален пустой ключ: " << entry.subkeyName << std::endl;
+		}
+		else {
+			std::wcerr << L"Ошибка при удалении ключа " << entry.subkeyName << L". Код ошибки: " << result << std::endl;
+		}
+	}
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -143,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-	MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
+	//MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
@@ -351,6 +395,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		SendMessage(hwndComboBoxCP, CB_SETCURSEL, 0, 0);
 #pragma endregion
+		hButton6 = CreateWindow(L"BUTTON", L"Анализ реестра", WS_CHILD | WS_VISIBLE, PW.x2, 720, 180, 40, hwnd, (HMENU)141, GetModuleHandle(NULL), NULL);
 		break;
 	}
 
@@ -809,6 +854,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			MessageBox(NULL, L"Png сохранено!", L"Успех", MB_ICONERROR | MB_OK);
 			DeleteObject(hBitmap);
 			DeleteDC(memDC);
+		}
+		if (LOWORD(wParam) == 141) {
+			SetWindowText(hButton6, L"Обработка");
+			HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_CONFIG };
+			std::vector<RegistryEntry> emptyEntries;
+
+			for (const HKEY& baseKey : baseKeys) {
+				FindEmptyRegistryEntries(baseKey, L"", emptyEntries);
+			}
+
+			// RemoveEmptyRegistryEntries(emptyEntries);
+			SetWindowText(hButton6, L"Анализ реестра");
 		}
 		break;
 	}
