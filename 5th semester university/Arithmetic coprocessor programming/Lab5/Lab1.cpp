@@ -11,6 +11,7 @@
 #include <deque>
 #include <chrono>
 #include <Psapi.h>
+#include <future>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "gdiplus.lib")
@@ -18,7 +19,8 @@
 #pragma comment(lib, "wininet.lib")
 
 #define M_PI 3.141592653589793238462643383279
-#define WM_PAINT_CP (WM_APP + 1)
+#define WM_SEARCH_REG (WM_APP + 1)
+#define WM_DELETE_REG (WM_APP + 2)
 #define MYBYTES 1048576
 
 #pragma region const
@@ -82,6 +84,9 @@ Gdiplus::Point startPos;
 std::vector<float> cpuLoadHistory;
 std::vector<float> memoryLoadHistory;
 std::vector<std::wstring> StarusCP;
+std::vector<HKEY> emptyValues;
+HANDLE Search, Delete;
+long long deleteValues = 0;
 
 #pragma endregion
 
@@ -114,27 +119,27 @@ void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dw
 			message2 += std::to_wstring(currentDevMode.dmPelsWidth);
 			message2 += L" x ";
 			message2 += std::to_wstring(currentDevMode.dmPelsHeight);
-			MessageBox(NULL, message2.c_str(), L"Ошибка", MB_ICONERROR | MB_OK);
+			MessageBox(NULL, message2.c_str(), L"", MB_ICONINFORMATION | MB_OK);
 
 			prevDevMode = currentDevMode;
 		}
 
 		if (prevPowerStatus.ACLineStatus != currentPowerStatus.ACLineStatus) {
 			if (currentPowerStatus.ACLineStatus == 0) {
-				MessageBox(NULL, L"Режим питания от аккумулятора.", L"Ошибка", MB_ICONERROR | MB_OK);
+				MessageBox(NULL, L"Режим питания от аккумулятора", L"", MB_ICONINFORMATION | MB_OK);
 			}
 			else {
-				MessageBox(NULL, L"Режим питания от сети", L"Ошибка", MB_ICONERROR | MB_OK);
+				MessageBox(NULL, L"Режим питания от сети", L"", MB_ICONINFORMATION | MB_OK);
 			}
 			prevPowerStatus = currentPowerStatus;
 		}
 
 		if (currentInternet != prevInternet) {
 			if (currentInternet == TRUE) {
-				MessageBox(NULL, L"Есть доступ к интернету.", L"Ошибка", MB_ICONERROR | MB_OK);
+				MessageBox(NULL, L"Есть доступ к интернету", L"", MB_ICONINFORMATION | MB_OK);
 			}
 			else {
-				MessageBox(NULL, L"Нет доступа к интернету", L"Ошибка", MB_ICONERROR | MB_OK);
+				MessageBox(NULL, L"Нет доступа к интернету", L"", MB_ICONINFORMATION | MB_OK);
 			}
 			prevInternet = currentInternet;
 		}
@@ -143,42 +148,87 @@ void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dw
 	}
 }
 
+void GetEmptyValues(HKEY hRootKey, TCHAR* szPath)
+{
+	HKEY hKey = NULL;
+	LONG lResult = RegOpenKeyEx(hRootKey, szPath, 0, KEY_READ, &hKey);
+	if (lResult != ERROR_SUCCESS)
+		return;
 
-void FindEmptyRegistryEntries(HKEY hKey, const std::wstring& subkey, std::vector<RegistryEntry>& emptyEntries) {
-	HKEY hSubKey;
-	if (RegOpenKeyEx(hKey, subkey.c_str(), 0, KEY_ALL_ACCESS, &hSubKey) == ERROR_SUCCESS) {
-		DWORD subkeyCount, maxValueNameLen, maxValueLen;
-		if (RegQueryInfoKey(hSubKey, nullptr, nullptr, nullptr, &subkeyCount, nullptr, nullptr, nullptr, &maxValueNameLen, &maxValueLen, nullptr, nullptr) == ERROR_SUCCESS) {
-			if (subkeyCount == 0 && maxValueNameLen == 0 && maxValueLen == 0) {
-				// Нет подключов и записей в данном ключе, считаем его пустым
-				emptyEntries.push_back({ hKey, subkey });
-			}
-			else {
-				// Проход по подключам
-				for (DWORD i = 0; i < subkeyCount; i++) {
-					WCHAR subkeyName[MAX_PATH];
-					DWORD subkeyNameLen = MAX_PATH;
-					if (RegEnumKeyEx(hSubKey, i, subkeyName, &subkeyNameLen, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS) {
-						std::wstring fullSubkey = subkey + L"\\" + subkeyName;
-						FindEmptyRegistryEntries(hSubKey, fullSubkey, emptyEntries);
-					}
-				}
+	// количество подключей
+    DWORD dwSubKeys = 0;
+    lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (lResult != ERROR_SUCCESS)
+        return;
+
+	for (DWORD i = 0; i < dwSubKeys; i++)
+	{
+		DWORD lpdwMAX_PATH = MAX_PATH;
+		TCHAR szSubKeyName[MAX_PATH] = { 0 };
+		lResult = RegEnumKeyEx(hKey, i, szSubKeyName, &lpdwMAX_PATH, NULL, NULL, NULL, NULL);
+		if (lResult != ERROR_SUCCESS)
+			return;
+
+		GetEmptyValues(hKey, szSubKeyName);
+	}
+
+	// количество значений
+	DWORD dwValues = 0;
+	lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, &dwValues, NULL, NULL, NULL, NULL);
+	if (lResult != ERROR_SUCCESS)
+		return;
+
+	for (DWORD i = 0; i < dwValues; i++)
+	{
+		DWORD lpdwMAX_PATH = MAX_PATH;
+		TCHAR szValueName[MAX_PATH] = { 0 };
+		lResult = RegEnumValue(hKey, i, szValueName, &lpdwMAX_PATH, NULL, NULL, NULL, NULL);
+		if (lResult != ERROR_SUCCESS)
+			return;
+
+		// является ли значение пустым
+		DWORD dwType = 0;
+		DWORD dwSize = MAX_PATH;
+		TCHAR szValueData[MAX_PATH] = { 0 };
+		lResult = RegQueryValueEx(hKey, szValueName, 0, &dwType, (LPBYTE)szValueData, &dwSize);
+		if (lResult == ERROR_SUCCESS && szValueData[0] == '\0')
+		{
+			HKEY hKeyTemp = NULL;
+			lResult = RegOpenKeyEx(hRootKey, szPath, 0, KEY_READ, &hKeyTemp);
+			if (lResult == ERROR_SUCCESS)
+			{
+				emptyValues.push_back(hKeyTemp);
+				RegCloseKey(hKeyTemp);
 			}
 		}
-		RegCloseKey(hSubKey);
 	}
+	RegCloseKey(hKey);
 }
 
-void RemoveEmptyRegistryEntries(const std::vector<RegistryEntry>& emptyEntries) {
-	for (const RegistryEntry& entry : emptyEntries) {
-		LONG result = RegDeleteKey(entry.parentKey, entry.subkeyName.c_str());
-		if (result == ERROR_SUCCESS) {
-			std::wcout << L"Удален пустой ключ: " << entry.subkeyName << std::endl;
-		}
-		else {
-			std::wcerr << L"Ошибка при удалении ключа " << entry.subkeyName << L". Код ошибки: " << result << std::endl;
-		}
+void DeleteEmptyValues()
+{
+	deleteValues = 0;
+	for (HKEY hKey : emptyValues)
+	{
+		LONG lResult = RegDeleteValue(hKey, NULL);
+		if (lResult != ERROR_SUCCESS)
+			return;
+		deleteValues++;
+		RegCloseKey(hKey);
 	}
+
+	PostMessage(hwndMain, WM_DELETE_REG, 0, 0);
+}
+
+void StartSearch() {
+	HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_CONFIG };
+	
+	for (HKEY baseKey : baseKeys) {
+		TCHAR szPath[MAX_PATH] = { 0 };
+		GetEmptyValues(baseKey, szPath);
+	}
+
+	PostMessage(hwndMain, WM_SEARCH_REG, 0, 0);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -305,6 +355,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
+	case WM_SEARCH_REG:
+	{
+		std::wstring message = L"Найдено ";
+		message += std::to_wstring(emptyValues.size());
+		message += L" пустых значений.\nУдалить?";
+
+		int result = MessageBox(NULL, message.c_str(), L"Подтверждение", MB_YESNO);
+
+		if (result == IDYES) 
+		{
+			Delete = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)DeleteEmptyValues, NULL, 0, NULL);
+		}
+		else
+		{
+			SetWindowText(hButton6, L"Анализ реестра");
+		}
+
+		CloseHandle(Search);
+		break;
+	}
+
+	case WM_DELETE_REG:
+	{
+		std::wstring message = L"Удалено ";
+		message += std::to_wstring(deleteValues);
+		message += L" значений из ";
+		message += std::to_wstring(emptyValues.size());
+
+		MessageBox(NULL, message.c_str(), L"", MB_ICONINFORMATION | MB_OK);
+
+		CloseHandle(Delete);
+		break;
+	}
+
 	case WM_CREATE:
 	{
 #pragma region Elements
@@ -856,16 +940,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			DeleteDC(memDC);
 		}
 		if (LOWORD(wParam) == 141) {
-			SetWindowText(hButton6, L"Обработка");
-			HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_CONFIG };
-			std::vector<RegistryEntry> emptyEntries;
-
-			for (const HKEY& baseKey : baseKeys) {
-				FindEmptyRegistryEntries(baseKey, L"", emptyEntries);
+			DWORD dwExitCode1 = 0;
+			DWORD dwExitCode2 = 0;
+			if (GetExitCodeThread(Search, &dwExitCode1) || GetExitCodeThread(Delete, &dwExitCode2))
+			{
+				if (dwExitCode1 == STILL_ACTIVE || dwExitCode2 == STILL_ACTIVE) {
+					MessageBox(NULL, L"Реестр обрабатывается", L"Ошибка", MB_ICONERROR | MB_OK);
+				}
 			}
-
-			// RemoveEmptyRegistryEntries(emptyEntries);
-			SetWindowText(hButton6, L"Анализ реестра");
+			else
+			{
+				SetWindowText(hButton6, L"Обработка");
+				emptyValues.clear();
+				Search = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartSearch, NULL, 0, NULL);
+			}
 		}
 		break;
 	}
