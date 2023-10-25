@@ -55,6 +55,7 @@ struct PaintWindow
 struct RegistryEntry {
 	HKEY parentKey;
 	std::wstring subkeyName;
+	TCHAR* szPath;
 };
 
 // Глобальные переменные
@@ -84,7 +85,7 @@ Gdiplus::Point startPos;
 std::vector<float> cpuLoadHistory;
 std::vector<float> memoryLoadHistory;
 std::vector<std::wstring> StarusCP;
-std::vector<HKEY> emptyValues;
+std::vector<RegistryEntry> emptyValues;
 HANDLE Search, Delete;
 long long deleteValues = 0;
 
@@ -156,10 +157,13 @@ void GetEmptyValues(HKEY hRootKey, TCHAR* szPath)
 		return;
 
 	// количество подключей
-    DWORD dwSubKeys = 0;
-    lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    if (lResult != ERROR_SUCCESS)
-        return;
+	DWORD dwSubKeys = 0;
+	DWORD dwValues = 0;
+	lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, &dwValues, NULL, NULL, NULL, NULL);
+	if (lResult != ERROR_SUCCESS) {
+		RegCloseKey(hKey);
+		return;
+	}
 
 	for (DWORD i = 0; i < dwSubKeys; i++)
 	{
@@ -172,57 +176,61 @@ void GetEmptyValues(HKEY hRootKey, TCHAR* szPath)
 		GetEmptyValues(hKey, szSubKeyName);
 	}
 
-	// количество значений
-	DWORD dwValues = 0;
-	lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, &dwValues, NULL, NULL, NULL, NULL);
-	if (lResult != ERROR_SUCCESS)
-		return;
-
+	bool check = true;
 	for (DWORD i = 0; i < dwValues; i++)
 	{
 		DWORD lpdwMAX_PATH = MAX_PATH;
 		TCHAR szValueName[MAX_PATH] = { 0 };
 		lResult = RegEnumValue(hKey, i, szValueName, &lpdwMAX_PATH, NULL, NULL, NULL, NULL);
-		if (lResult != ERROR_SUCCESS)
-			return;
-
-		// является ли значение пустым
-		DWORD dwType = 0;
-		DWORD dwSize = MAX_PATH;
-		TCHAR szValueData[MAX_PATH] = { 0 };
-		lResult = RegQueryValueEx(hKey, szValueName, 0, &dwType, (LPBYTE)szValueData, &dwSize);
-		if (lResult == ERROR_SUCCESS && szValueData[0] == '\0')
+		if (lResult == ERROR_SUCCESS)
 		{
-			HKEY hKeyTemp = NULL;
-			lResult = RegOpenKeyEx(hRootKey, szPath, 0, KEY_READ, &hKeyTemp);
-			if (lResult == ERROR_SUCCESS)
+			DWORD dwSize = MAX_PATH;
+			TCHAR szValueData[MAX_PATH] = { 0 };
+			DWORD dwType = 0;
+			lResult = RegQueryValueEx(hKey, szValueName, 0, &dwType, (LPBYTE)szValueData, &dwSize);
+
+			// if (lResult == ERROR_SUCCESS && dwType == REG_SZ && szValueData[0] == '\0')
+
+			if (lResult == ERROR_SUCCESS && szValueData[0] == '\0')
 			{
-				emptyValues.push_back(hKeyTemp);
-				RegCloseKey(hKeyTemp);
+				check = false;
+				RegistryEntry buf;
+				buf.parentKey = hKey;
+				buf.subkeyName = szValueName;
+				buf.szPath = szPath;
+				emptyValues.push_back(buf);
 			}
 		}
 	}
-	RegCloseKey(hKey);
+
+	if (check)
+		RegCloseKey(hKey);
 }
 
 void DeleteEmptyValues()
 {
 	deleteValues = 0;
-	for (HKEY hKey : emptyValues)
+	for (RegistryEntry hKey : emptyValues)
 	{
-		LONG lResult = RegDeleteValue(hKey, NULL);
+		HKEY key = NULL;
+
+		LONG lResult = RegOpenKeyEx(hKey.parentKey, hKey.szPath, 0, KEY_READ | KEY_WRITE, &key);
 		if (lResult != ERROR_SUCCESS)
-			return;
-		deleteValues++;
-		RegCloseKey(hKey);
+			continue;
+
+		lResult = RegDeleteValue(key, hKey.subkeyName.c_str());
+		RegCloseKey(key);
+
+		if (lResult == ERROR_SUCCESS)
+			deleteValues++;
 	}
 
 	PostMessage(hwndMain, WM_DELETE_REG, 0, 0);
 }
 
 void StartSearch() {
-	HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_CONFIG };
-	
+	HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_USERS, HKEY_CURRENT_CONFIG, HKEY_CLASSES_ROOT };
+
 	for (HKEY baseKey : baseKeys) {
 		TCHAR szPath[MAX_PATH] = { 0 };
 		GetEmptyValues(baseKey, szPath);
@@ -363,7 +371,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		int result = MessageBox(NULL, message.c_str(), L"Подтверждение", MB_YESNO);
 
-		if (result == IDYES) 
+		if (result == IDYES)
 		{
 			Delete = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)DeleteEmptyValues, NULL, 0, NULL);
 		}
@@ -384,6 +392,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		message += std::to_wstring(emptyValues.size());
 
 		MessageBox(NULL, message.c_str(), L"", MB_ICONINFORMATION | MB_OK);
+		SetWindowText(hButton6, L"Анализ реестра");
 
 		CloseHandle(Delete);
 		break;
