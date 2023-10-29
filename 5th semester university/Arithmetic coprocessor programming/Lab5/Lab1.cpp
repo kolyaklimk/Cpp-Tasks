@@ -156,7 +156,6 @@ void GetEmptyValues(HKEY hRootKey, TCHAR* szPath)
 	if (lResult != ERROR_SUCCESS)
 		return;
 
-	// количество подключей
 	DWORD dwSubKeys = 0;
 	DWORD dwValues = 0;
 	lResult = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwSubKeys, NULL, NULL, &dwValues, NULL, NULL, NULL, NULL);
