@@ -156,7 +156,7 @@ void SemaforTask() {
 	{
 		// The semaphore object was signaled.
 	case WAIT_OBJECT_0: {
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 		MessageBox(NULL, L"Семафор", L"", MB_ICONINFORMATION | MB_OK);
 		ReleaseSemaphore(hSemaphore, 1, NULL);
 		break;
