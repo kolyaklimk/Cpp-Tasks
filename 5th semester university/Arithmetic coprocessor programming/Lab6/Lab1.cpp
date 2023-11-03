@@ -151,7 +151,7 @@ void Monitoring(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dw
 
 void SemaforTask() {
 	DWORD dwWaitResult;
-	dwWaitResult = WaitForSingleObject(hSemaphore, 0L);
+	dwWaitResult = WaitForSingleObject(hSemaphore, 100000L);
 	switch (dwWaitResult)
 	{
 		// The semaphore object was signaled.
@@ -159,11 +159,6 @@ void SemaforTask() {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		MessageBox(NULL, L"Семафор", L"", MB_ICONINFORMATION | MB_OK);
 		ReleaseSemaphore(hSemaphore, 1, NULL);
-		break;
-	}
-	case WAIT_TIMEOUT: {
-		std::this_thread::sleep_for(std::chrono::microseconds(1100));
-		SemaforTask();
 		break;
 	}
 	}
@@ -997,7 +992,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == 141) {
 			Search = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartSearch, NULL, 0, NULL);
-			MessageBox(NULL, L"Реестр обрабатывается", L"Ошибка", MB_ICONINFORMATION | MB_OK);
+			MessageBox(NULL, L"Реестр обрабатывается", L"", MB_ICONINFORMATION | MB_OK);
 		}
 		if (LOWORD(wParam) == 142) {
 			HANDLE aThread[10];
