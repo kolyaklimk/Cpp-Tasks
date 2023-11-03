@@ -154,7 +154,6 @@ void SemaforTask() {
 	dwWaitResult = WaitForSingleObject(hSemaphore, 100000L);
 	switch (dwWaitResult)
 	{
-		// The semaphore object was signaled.
 	case WAIT_OBJECT_0: {
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		MessageBox(NULL, L"Семафор", L"", MB_ICONINFORMATION | MB_OK);
