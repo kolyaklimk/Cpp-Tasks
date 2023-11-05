@@ -243,10 +243,11 @@ void DeleteEmptyValues()
 
 void StartSearch() {
 	DWORD dwWaitResult;
-	dwWaitResult = WaitForSingleObject(hMutex, INFINITE);
+	dwWaitResult = WaitForSingleObject(hMutex, 200L);
 	switch (dwWaitResult)
 	{
 	case WAIT_OBJECT_0: {
+		MessageBox(NULL, L"Реестр обрабатывается", L"", MB_ICONINFORMATION | MB_OK);
 		emptyValues.clear();
 		HKEY  baseKeys[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_USERS, HKEY_CURRENT_CONFIG, HKEY_CLASSES_ROOT };
 
@@ -259,7 +260,7 @@ void StartSearch() {
 		break;
 	}
 	case WAIT_ABANDONED:
-		MessageBox(NULL, L"Реестр обрабатывается", L"Ошибка", MB_ICONERROR | MB_OK);
+		MessageBox(NULL, L"Реестр не обрабатывается", L"Ошибка", MB_ICONERROR | MB_OK);
 		return;
 	}
 	ReleaseMutex(hMutex);
@@ -417,7 +418,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			SetWindowText(hButton6, L"Анализ реестра");
 		}
 
 		CloseHandle(Search);
@@ -432,7 +432,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		message += std::to_wstring(emptyValues.size());
 
 		MessageBox(NULL, message.c_str(), L"", MB_ICONINFORMATION | MB_OK);
-		SetWindowText(hButton6, L"Анализ реестра");
 
 		CloseHandle(Delete);
 		break;
@@ -529,7 +528,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hwndComboBoxCP, CB_SETCURSEL, 0, 0);
 #pragma endregion
 		hButton6 = CreateWindow(L"BUTTON", L"Анализ", WS_CHILD | WS_VISIBLE, PW.x2, 720, 90, 40, hwnd, (HMENU)141, GetModuleHandle(NULL), NULL);
-		hButton6 = CreateWindow(L"BUTTON", L"Семафор", WS_CHILD | WS_VISIBLE, PW.x2 + 90, 720, 90, 40, hwnd, (HMENU)142, GetModuleHandle(NULL), NULL);
+		HANDLE hButton7 = CreateWindow(L"BUTTON", L"Семафор", WS_CHILD | WS_VISIBLE, PW.x2 + 90, 720, 90, 40, hwnd, (HMENU)142, GetModuleHandle(NULL), NULL);
 		break;
 	}
 
@@ -991,7 +990,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == 141) {
 			Search = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartSearch, NULL, 0, NULL);
-			MessageBox(NULL, L"Реестр обрабатывается", L"", MB_ICONINFORMATION | MB_OK);
 		}
 		if (LOWORD(wParam) == 142) {
 			HANDLE aThread[10];
