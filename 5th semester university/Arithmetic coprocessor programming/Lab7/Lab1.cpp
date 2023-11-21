@@ -1,3 +1,5 @@
+Ôªø#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <vector>
 #include <CommCtrl.h> 
@@ -13,6 +15,7 @@
 #include <Psapi.h>
 #include <future>
 
+#pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "user32.lib")
@@ -21,6 +24,7 @@
 #define M_PI 3.141592653589793238462643383279
 #define WM_SEARCH_REG (WM_APP + 1)
 #define WM_DELETE_REG (WM_APP + 2)
+#define WM_SERVER (WM_APP + 3)
 #define MYBYTES 1048576
 
 #pragma region const
@@ -62,7 +66,7 @@ struct RegistryEntry {
 HINSTANCE hInst;
 HDC hdcBuffer;
 HBITMAP hBitmap;
-HWND hwndMain, hwndComboBox, hSlider, hSliderCP, hSliderThickness, hSliderScale, hSliderRotation, hwndList, hwndListCP, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave, hwndComboBoxCP, hButton6;
+HWND hwndMain, hwndListServer, hwndEditServer, hwndEditPort, hwndEditIP, hButtonPort, hButtonSend, hwndComboBox, hSlider, hSliderCP, hSliderThickness, hSliderScale, hSliderRotation, hwndList, hwndListCP, hwndDeleteItem, hwndUpItem, hwndDownItem, hwndSave, hwndComboBoxCP, hButton6;
 COLORREF customColorsThickness[16]{ 0 };
 COLORREF customColorsBrush[16]{ 0 };
 CHOOSECOLOR ccThickness, ccBrush;
@@ -86,8 +90,10 @@ std::vector<float> cpuLoadHistory;
 std::vector<float> memoryLoadHistory;
 std::vector<std::wstring> StarusCP;
 std::vector<RegistryEntry> emptyValues;
-HANDLE Search, Delete, hMutex, hSemaphore;
+HANDLE Search, Delete, hMutex, hSemaphore, ServerThread;
 long long deleteValues = 0;
+bool isConnected = false;
+SOCKET clientSocket;
 
 #pragma endregion
 
@@ -159,6 +165,23 @@ void SemaforTask() {
 		ReleaseSemaphore(hSemaphore, 1, NULL);
 		break;
 	}
+	}
+}
+
+void GetMessages() {
+	while (true) {
+		char buffer[250]; 
+		int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0); 
+		if (bytesReceived > 0) {
+			buffer[bytesReceived] = '\0';
+
+			int wBufferSize = MultiByteToWideChar(CP_ACP, 0, buffer, -1, NULL, 0); 
+			wchar_t* wBuffer = new wchar_t[wBufferSize]; 
+			MultiByteToWideChar(CP_ACP, 0, buffer, -1, wBuffer, wBufferSize); 
+			SendMessage(hwndListServer, LB_ADDSTRING, 0, (LPARAM)wBuffer);
+
+			delete[] wBuffer;
+		}
 	}
 }
 
@@ -271,6 +294,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
 
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		MessageBox(NULL, L"Error Winsock", L"Error", MB_ICONERROR | MB_OK);
+		return 1;
+	}
+
+	ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)GetMessages, NULL, 0, NULL);
+
 	hMutex = CreateMutex(NULL, FALSE, NULL);
 	if (hMutex == NULL)
 	{
@@ -288,7 +320,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WndProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"MyWindowClass", NULL };
 	RegisterClassEx(&wc);
 
-	hwndMain = CreateWindow(L"MyWindowClass", L"My Window Title", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, NULL, NULL, PW.x2 + 200, PW.y2, NULL, NULL, hInstance, NULL);
+	hwndMain = CreateWindow(L"MyWindowClass", L"My Window Title", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, NULL, NULL, PW.x2 + 400, PW.y2, NULL, NULL, hInstance, NULL);
 	SetWindowLong(hwndMain, GWL_STYLE, GetWindowLong(hwndMain, GWL_STYLE) & ~WS_THICKFRAME);
 
 	HDC hdc = GetDC(hwndMain);
@@ -299,7 +331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	RECT rectSlider{ 0,0,PW.x1,PW.y2 };
 	FillRect(hdc, &rectSlider, (HBRUSH)(COLOR_WINDOW));
-	RECT rectSlider2{ PW.x2,0,PW.x2 + 200,PW.y2 };
+	RECT rectSlider2{ PW.x2,0,PW.x2 + 400,PW.y2 };
 	FillRect(hdc, &rectSlider2, (HBRUSH)(COLOR_WINDOW));
 	ReleaseDC(hwndMain, hdc);
 
@@ -324,6 +356,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CloseHandle(hThreadUpdateData);
 	TerminateThread(hThreadMonitoring, 0);
 	CloseHandle(hThreadMonitoring);
+
+	closesocket(clientSocket);
+	WSACleanup();
 
 	return msg.wParam;
 }
@@ -526,6 +561,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 		hButton6 = CreateWindow(L"BUTTON", L"Search", WS_CHILD | WS_VISIBLE, PW.x2, 720, 90, 40, hwnd, (HMENU)141, GetModuleHandle(NULL), NULL);
 		HANDLE hButton7 = CreateWindow(L"BUTTON", L"Semaphore", WS_CHILD | WS_VISIBLE, PW.x2 + 90, 720, 90, 40, hwnd, (HMENU)142, GetModuleHandle(NULL), NULL);
+
+#pragma region Server
+		hwndListServer = CreateWindowEx(0, L"LISTBOX", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL, PW.x2 + 200, 100, 180, 400, hwnd, NULL, GetModuleHandle(NULL), NULL);
+		hwndEditServer = CreateWindowEx(0, L"EDIT", NULL, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | WS_BORDER | LBS_NOTIFY, PW.x2 + 200, 510, 180, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+		SendMessage(hwndEditServer, EM_SETLIMITTEXT, 200, 0);
+		hButtonSend = CreateWindow(L"BUTTON", L"Send", WS_CHILD | WS_VISIBLE, PW.x2 + 200, 540, 180, 40, hwnd, (HMENU)6601, GetModuleHandle(NULL), NULL);
+
+		hwndEditIP = CreateWindowEx(0, L"EDIT", NULL, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | WS_BORDER | LBS_NOTIFY, PW.x2 + 200, 10, 180, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+		hwndEditPort = CreateWindowEx(0, L"EDIT", NULL, WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | WS_BORDER | LBS_NOTIFY, PW.x2 + 200, 30, 180, 20, hwnd, NULL, GetModuleHandle(NULL), NULL);
+		SendMessage(hwndEditIP, EM_SETLIMITTEXT, 20, 0);
+		SendMessage(hwndEditPort, EM_SETLIMITTEXT, 10, 0);
+		hButtonPort = CreateWindow(L"BUTTON", L"Connect", WS_CHILD | WS_VISIBLE, PW.x2 + 200, 50, 180, 40, hwnd, (HMENU)6602, GetModuleHandle(NULL), NULL);
+#pragma endregion
 		break;
 	}
 
@@ -995,6 +1043,63 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				aThread[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SemaforTask, NULL, 0, &ThreadID);
 			}
 		}
+		if (LOWORD(wParam) == 6602) {
+			TCHAR buffer[15];
+			TCHAR buffer2[25];
+			GetWindowText(hwndEditIP, buffer2, sizeof(buffer2) / sizeof(TCHAR));
+			GetWindowText(hwndEditPort, buffer, sizeof(buffer) / sizeof(TCHAR));
+			std::wstring text(buffer);
+
+			int charSize = WideCharToMultiByte(CP_ACP, 0, buffer2, -1, NULL, 0, NULL, NULL);
+			char* charString = new char[charSize];
+			WideCharToMultiByte(CP_ACP, 0, buffer2, -1, charString, charSize, NULL, NULL);
+
+			try {
+				closesocket(clientSocket);
+				int value = std::stoi(text);
+
+				clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				if (clientSocket == INVALID_SOCKET) {
+					MessageBox(NULL, L"Failed to create socket", L"Error", MB_OK | MB_ICONERROR);
+					break;
+				}
+
+				sockaddr_in serverAddr;
+				serverAddr.sin_family = AF_INET;
+				serverAddr.sin_port = htons(value);
+				inet_pton(AF_INET, charString, &serverAddr.sin_addr);
+
+				if (connect(clientSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+					MessageBox(NULL, L"Failed to connect to server", L"Error", MB_OK | MB_ICONERROR);
+					closesocket(clientSocket);
+					break;
+				}
+
+				SendMessage(hwndListServer, LB_RESETCONTENT, 0, 0);
+
+				MessageBox(NULL, L"Connected", L"", MB_ICONINFORMATION | MB_OK);
+			}
+			catch (std::exception const& e)
+			{
+				MessageBox(NULL, L"Incorrect port", L"Error", MB_OK | MB_ICONERROR);
+			}
+		}
+		if (LOWORD(wParam) == 6601) {
+			TCHAR buffer[256];
+			GetWindowText(hwndEditServer, buffer, sizeof(buffer) / sizeof(TCHAR));
+
+			int bufferSize = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL);
+			char* utf8Buffer = new char[bufferSize];
+			WideCharToMultiByte(CP_UTF8, 0, buffer, -1, utf8Buffer, bufferSize, NULL, NULL);
+			int bytesSent = send(clientSocket, utf8Buffer, bufferSize - 1, 0);
+			delete[] utf8Buffer;
+
+			if (bytesSent == SOCKET_ERROR) {
+				MessageBox(NULL, L"Failed to send data to server", L"Error", MB_OK | MB_ICONERROR);
+				closesocket(clientSocket);
+				break;
+			}
+		}
 		break;
 	}
 
@@ -1144,7 +1249,7 @@ void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::Soli
 	graphics.TranslateTransform(-(x2 + x1) / 2, -(y2 + y1) / 2);
 
 	switch (selectedShape) {
-		//  Û„
+		// √ä√∞√≥√£
 	case 1:
 	{
 		if (isCorrect) {
@@ -1169,7 +1274,7 @@ void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::Soli
 		}
 		break;
 	}
-	// N-Û„ÓÎ¸ÌËÍ
+	// N-√≥√£√Æ√´√º√≠√®√™
 	case 2: {
 		if (isCorrect)
 		{
@@ -1232,7 +1337,7 @@ void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::Soli
 		}
 		break;
 	}
-		  // œˇÏ‡ˇ
+		  // √è√∞√ø√¨√†√ø
 	case 3: {
 		Gdiplus::Point startPoint(x1, y1);
 		Gdiplus::Point endPoint(x2, y2);
@@ -1240,7 +1345,7 @@ void DrawShape(Gdiplus::Graphics& graphics, Gdiplus::Pen* penPlus, Gdiplus::Soli
 		break;
 	}
 
-		  //  ‡‡Ì‰‡¯
+		  // √ä√†√∞√†√≠√§√†√∏
 	case 4:
 	{
 		graphics.DrawCurve(penPlus, &pen[0], pen.size());
